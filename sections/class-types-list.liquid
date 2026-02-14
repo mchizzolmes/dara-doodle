@@ -1,0 +1,114 @@
+{%- comment -%}
+  Section: Class Types List
+  Automatically displays all class type metaobject entries
+{%- endcomment -%}
+
+{%- paginate shop.metaobjects.class_type.values by 250 -%}
+  <div class="class-type-container">
+    {%- for class_type in shop.metaobjects.class_type.values -%}
+      <div class="class-type-card" style="background-color:{{ class_type.bg_color.value }}">
+        <div class="class-title-section">
+          <div class="class-icon">
+            {%- if class_type.icon -%}
+            <img src="{{ class_type.icon.value | image_url: height: 200 }}" height="300" width="300" alt="{{ class_type.name.value }}">
+            {%- endif -%}
+          </div>
+          <div class="class-title-text">
+            <h3>{{ class_type.name.value }}</h3>
+            <h4>{{ class_type.age_range.value }}</h4>
+          </div>
+        </div>
+        <div class="class-description">
+          {{ class_type.description | metafield_tag }}
+        </div>
+        <div class="class-detail-columns">
+          <div class="class-detail-single-column">
+            {{ class_type.first_column | metafield_tag }}
+          </div>
+          <div class="class-detail-single-column">
+            {{ class_type.second_column | metafield_tag }}
+          </div>
+        </div>
+      </div>
+    {%- endfor -%}
+  </div>
+{%- endpaginate -%}
+
+{%  style %}
+    .class-type-container {
+        display:flex;
+        flex-flow:column nowrap;
+        padding:80px 0px;
+        margin:0px 10px;
+        
+    }
+    .class-type-card {
+      display:flex;
+      margin:20px auto;
+      padding:30px 5vw;
+      flex-flow: column nowrap;
+      max-width:1000px;
+      border-radius:30px;
+      color:#fff;
+      gap:30px;
+      text-wrap:stable;
+    }
+    .class-title-section {
+      display:flex;
+      flex-direction:row;
+      flex-wrap:nowrap;
+      gap: 20px;
+      justify-content:flex-start;
+      align-items:center;
+    }
+    .class-title-text {
+      display:flex;
+      flex-grow:1;
+      flex-direction:column;
+      justify-content:space-around;
+    }
+    .class-icon img {
+      margin:10px;
+      width:auto;
+      height:100px;
+    }
+    p {
+      font-size:1.1rem;
+    }
+    h3, h4 {
+      margin:unset;
+      padding:5px;
+      line-height:1.2;
+    }
+
+    @media screen and (max-width: 768px) {
+      h3, h4 {
+        font-size:1vw + 1em;
+      }
+    }
+    
+    .class-description {
+      
+    }
+    .class-detail-columns {
+      display:flex;
+      flex-flow:row wrap;
+    }
+    .class-detail-single-column {
+      display:flex;
+      flex-basis:400px;
+    }
+
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Class Types List",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Class Types List"
+    }
+  ]
+}
+{% endschema %}
