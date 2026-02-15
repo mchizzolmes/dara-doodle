@@ -1,0 +1,327 @@
+{%- comment -%}
+  Section: Calendar
+  Displays a monthly calendar as a flex grid with 5 columns (Mon–Fri) and 7 rows
+  (1 day-label row + 6 week rows). Uses the current month by default.
+{%- endcomment -%}
+
+{%- liquid
+  assign today        = 'now' | date: '%s' | plus: 0
+  assign month_name   = 'now' | date: '%B'
+  assign year         = 'now' | date: '%Y' | plus: 0
+  assign month_num    = 'now' | date: '%-m' | plus: 0
+  assign days_in_month = 0
+
+  comment
+    Calculate days in current month
+  endcomment
+  case month_num
+    when 1, 3, 5, 7, 8, 10, 12
+      assign days_in_month = 31
+    when 4, 6, 9, 11
+      assign days_in_month = 30
+    when 2
+      assign days_in_month = 28
+      assign leap_check = year | modulo: 4
+      if leap_check == 0
+        assign cent_check = year | modulo: 100
+        if cent_check == 0
+          assign quad_check = year | modulo: 400
+          if quad_check == 0
+            assign days_in_month = 29
+          endif
+        else
+          assign days_in_month = 29
+        endif
+      endif
+  endcase
+
+  comment
+    ISO weekday of the 1st (1=Mon … 7=Sun), mapped to 0-based Mon offset
+    Liquid's %u gives 1=Mon…7=Sun
+  endcomment
+  assign first_day_str = year | append: '-' | append: month_num | append: '-01'
+  assign first_weekday = first_day_str | date: '%u' | plus: 0
+  comment
+    Offset: how many Mon-Fri cells to skip before day 1.
+    If first_weekday is Saturday(6) or Sunday(7) we treat it as landing on Mon next week.
+  endcomment
+  assign start_offset = first_weekday | minus: 1
+  if start_offset > 4
+    assign start_offset = 0
+  endif
+
+  assign today_day = 'now' | date: '%-d' | plus: 0
+  assign today_month = 'now' | date: '%-m' | plus: 0
+  assign today_year  = 'now' | date: '%Y' | plus: 0
+-%}
+
+<div class="calendar-section">
+
+  {%- comment -%} Section heading {%- endcomment -%}
+  {%- if section.settings.title != blank -%}
+    <h2 class="calendar-section__title">{{ section.settings.title }}</h2>
+  {%- endif -%}
+
+  {%- comment -%} Month / year header row {%- endcomment -%}
+  <div class="calendar-section__month-header">
+    <span class="calendar-section__month-name">{{ month_name }} {{ year }}</span>
+  </div>
+
+  {%- comment -%} Flex grid: 5 columns × 7 rows {%- endcomment -%}
+  <div class="calendar-section__grid" role="grid" aria-label="{{ month_name }} {{ year }} calendar">
+
+    {%- comment -%} Row 1: Day labels (Mon–Fri only) {%- endcomment -%}
+    {%- assign day_labels = 'Mon,Tue,Wed,Thu,Fri' | split: ',' -%}
+    {%- for label in day_labels -%}
+      <div class="calendar-section__day-label" role="columnheader" aria-label="{{ label }}">
+        {{ label }}
+      </div>
+    {%- endfor -%}
+
+    {%- comment -%}
+      Rows 2–7: 6 weeks × 5 weekday cells = 30 cells.
+      We fill leading empty cells, then day numbers, then trailing empties.
+    {%- endcomment -%}
+
+    {%- assign total_cells = 30 -%}
+    {%- assign day_counter = 1 -%}
+    {%- assign cell_index  = 0 -%}
+
+    {%- for cell in (1..total_cells) -%}
+      {%- liquid
+        assign cell_index = cell | minus: 1
+        assign is_offset  = false
+        if cell_index < start_offset
+          assign is_offset = true
+        endif
+        assign past_month = false
+        if day_counter > days_in_month
+          assign past_month = true
+        endif
+        assign is_today = false
+        if is_offset == false and past_month == false
+          if day_counter == today_day and month_num == today_month and year == today_year
+            assign is_today = true
+          endif
+        endif
+      -%}
+
+      {%- if is_offset -%}
+        <div class="calendar-section__cell calendar-section__cell--empty" role="gridcell" aria-hidden="true"></div>
+      {%- elsif past_month -%}
+        <div class="calendar-section__cell calendar-section__cell--empty" role="gridcell" aria-hidden="true"></div>
+      {%- else -%}
+        <div
+          class="calendar-section__cell{% if is_today %} calendar-section__cell--today{% endif %}"
+          role="gridcell"
+          aria-label="{{ month_name }} {{ day_counter }}, {{ year }}{% if is_today %} (today){% endif %}"
+        >
+          <span class="calendar-section__cell-date">{{ day_counter }}</span>
+          <div class="calendar-section__cell-content"></div>
+        </div>
+        {%- assign day_counter = day_counter | plus: 1 -%}
+      {%- endif -%}
+    {%- endfor -%}
+
+  </div>
+</div>
+
+{% style %}
+  .calendar-section {
+    padding: {{ section.settings.padding_top }}px {{ section.settings.padding_sides }}px {{ section.settings.padding_bottom }}px;
+    max-width: {{ section.settings.max_width }}px;
+    margin: 0 auto;
+    font-family: var(--font-body--family, sans-serif);
+    color: var(--color-foreground, #111);
+  }
+
+  .calendar-section__title {
+    margin: 0 0 16px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .calendar-section__month-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .calendar-section__month-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── Flex grid: 5 columns, 7 rows (1 header + 6 week rows) ── */
+  .calendar-section__grid {
+    display: flex;
+    flex-flow: row wrap;
+    width: 100%;
+    border-top: 1px solid var(--color-border, #e0e0e0);
+    border-left: 1px solid var(--color-border, #e0e0e0);
+  }
+
+  .calendar-section__day-label,
+  .calendar-section__cell {
+    flex: 0 0 20%;          /* exactly 5 columns */
+    width: 20%;
+    box-sizing: border-box;
+    border-right: 1px solid var(--color-border, #e0e0e0);
+    border-bottom: 1px solid var(--color-border, #e0e0e0);
+  }
+
+  /* Day-label row */
+  .calendar-section__day-label {
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--color-background-secondary, #f5f5f5);
+    color: var(--color-foreground-secondary, #666);
+  }
+
+  /* Day cells */
+  .calendar-section__cell {
+    min-height: {{ section.settings.cell_height }}px;
+    padding: 6px 8px;
+    position: relative;
+    background: var(--color-background, #fff);
+    transition: background 0.15s ease;
+  }
+
+  .calendar-section__cell:not(.calendar-section__cell--empty):hover {
+    background: var(--color-background-hover, #fafafa);
+  }
+
+  .calendar-section__cell--empty {
+    background: var(--color-background-secondary, #f9f9f9);
+  }
+
+  .calendar-section__cell-date {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 50%;
+    line-height: 1;
+  }
+
+  /* Today highlight */
+  .calendar-section__cell--today {
+    background: var(--color-background-accent, #eef4ff);
+  }
+
+  .calendar-section__cell--today .calendar-section__cell-date {
+    background: var(--color-primary, #2563eb);
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .calendar-section__cell-content {
+    margin-top: 4px;
+    min-height: 0;
+  }
+
+  /* Responsive: collapse to single-column list on small screens */
+  @media screen and (max-width: 600px) {
+    .calendar-section__grid {
+      display: block;
+    }
+
+    .calendar-section__day-label {
+      display: none;
+    }
+
+    .calendar-section__cell {
+      width: 100%;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .calendar-section__cell--empty {
+      display: none;
+    }
+
+    .calendar-section__cell::before {
+      content: attr(aria-label);
+      font-size: 0.75rem;
+      color: var(--color-foreground-secondary, #666);
+      flex-shrink: 0;
+      width: 120px;
+    }
+  }
+{% endstyle %}
+
+{% schema %}
+{
+  "name": "Calendar",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section title",
+      "default": "Schedule"
+    },
+    {
+      "type": "range",
+      "id": "cell_height",
+      "label": "Cell min-height (px)",
+      "min": 48,
+      "max": 200,
+      "step": 4,
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Max width (px)",
+      "min": 400,
+      "max": 1400,
+      "step": 20,
+      "default": 1000
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding top (px)",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding bottom (px)",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding_sides",
+      "label": "Padding sides (px)",
+      "min": 0,
+      "max": 80,
+      "step": 4,
+      "default": 16
+    }
+  ],
+  "presets": [
+    {
+      "name": "Calendar"
+    }
+  ]
+}
+{% endschema %}
