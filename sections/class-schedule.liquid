@@ -1,0 +1,529 @@
+{%- comment -%}
+  Section: Class Schedule
+  Metaobject-driven weekly schedule grid.
+  - Columns: Mon–Fri (5 columns)
+  - Rows: configurable time slots (set in section settings)
+  - Data: class_session metaobjects filtered by selected semester
+  - Mobile: horizontal swipe carousel with sticky time column
+{%- endcomment -%}
+
+{%- liquid
+  assign semester = section.settings.semester_ref
+  assign time_slot_count = section.settings.time_slot_count | plus: 0
+
+  comment
+    Build array of time slot labels from settings
+  endcomment
+  assign slot_labels = '' | split: ','
+  for i in (1..10)
+    assign key = 'time_slot_' | append: i | append: '_label'
+    assign val = section.settings[key]
+    if i <= time_slot_count and val != blank
+      assign slot_labels = slot_labels | append: val | append: '|'
+    endif
+  endfor
+  assign slot_labels = slot_labels | split: '|'
+
+  comment
+    Fetch and filter class_session entries for selected semester
+  endcomment
+  assign all_sessions = shop.metaobjects.class_session.values
+  assign sessions = '' | split: ','
+-%}
+
+{%- paginate shop.metaobjects.class_session.values by 250 -%}
+  {%- assign sessions = '' | split: '' -%}
+  {%- for s in shop.metaobjects.class_session.values -%}
+    {%- if semester != blank and s.semester.value.system.id == semester.system.id -%}
+      {%- assign sessions = sessions | concat: s -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endpaginate -%}
+
+{%- assign day_labels = 'Mon,Tue,Wed,Thu,Fri' | split: ',' -%}
+{%- assign day_full   = 'Monday,Tuesday,Wednesday,Thursday,Friday' | split: ',' -%}
+
+<div class="cs" id="class-schedule-{{ section.id }}" data-section-id="{{ section.id }}">
+
+  {%- comment -%} Header {%- endcomment -%}
+  <div class="cs__header">
+    {%- if section.settings.title != blank -%}
+      <h2 class="cs__title">{{ section.settings.title }}</h2>
+    {%- endif -%}
+    {%- if semester != blank -%}
+      <p class="cs__subtitle">
+        {{- semester.name.value -}}
+        {%- if semester.start_date.value != blank and semester.end_date.value != blank -%}
+          &nbsp;&mdash;&nbsp;{{ semester.start_date.value | date: '%b %-d' }} – {{ semester.end_date.value | date: '%b %-d, %Y' }}
+        {%- endif -%}
+      </p>
+    {%- endif -%}
+  </div>
+
+  {%- comment -%} Mobile day-tab nav {%- endcomment -%}
+  <div class="cs__day-tabs" aria-label="Jump to day" role="tablist">
+    {%- for label in day_labels -%}
+      <button
+        class="cs__day-tab{% if forloop.first %} is-active{% endif %}"
+        role="tab"
+        aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+        data-day-index="{{ forloop.index0 }}"
+        aria-controls="cs-col-{{ section.id }}-{{ forloop.index }}"
+      >{{ label }}</button>
+    {%- endfor -%}
+  </div>
+
+  {%- comment -%} Schedule grid {%- endcomment -%}
+  <div class="cs__grid-wrap">
+    <div class="cs__grid" id="cs-grid-{{ section.id }}" role="grid">
+
+      {%- comment -%} Row 0: column headers {%- endcomment -%}
+      <div class="cs__cell cs__cell--header cs__cell--time-col" role="columnheader" aria-label="Time"></div>
+      {%- for label in day_labels -%}
+        <div
+          class="cs__cell cs__cell--header cs__cell--day-col"
+          role="columnheader"
+          id="cs-col-{{ section.id }}-{{ forloop.index }}"
+          aria-label="{{ day_full[forloop.index0] }}"
+          data-day="{{ forloop.index }}"
+        >{{ label }}</div>
+      {%- endfor -%}
+
+      {%- comment -%} Rows 1–N: time slots {%- endcomment -%}
+      {%- for slot_index in (1..time_slot_count) -%}
+        {%- assign slot_label = slot_labels[forloop.index0] -%}
+
+        {%- comment -%} Time label cell {%- endcomment -%}
+        <div class="cs__cell cs__cell--time-col" role="rowheader">
+          <span class="cs__time-label">{{ slot_label }}</span>
+        </div>
+
+        {%- comment -%} Day cells {%- endcomment -%}
+        {%- for day_index in (1..5) -%}
+          <div class="cs__cell cs__cell--day-col" role="gridcell" data-day="{{ day_index }}" data-slot="{{ slot_index }}">
+            {%- comment -%} Find matching sessions for this day + slot {%- endcomment -%}
+            {%- for s in sessions -%}
+              {%- assign s_day  = s.day_of_week.value  | plus: 0 -%}
+              {%- assign s_slot = s.time_slot.value | plus: 0 -%}
+              {%- if s_day == day_index and s_slot == slot_index -%}
+                {%- assign ct = s.class_type.value -%}
+                {%- assign chip_color = ct.bg_color.value | default: '#4A90D9' -%}
+                <div
+                  class="cs__chip"
+                  style="background-color: {{ chip_color }};"
+                  aria-label="{{ ct.name.value }}, {{ ct.age_range.value }}"
+                >
+                  {%- if ct.icon.value != blank -%}
+                    <img
+                      class="cs__chip-icon"
+                      src="{{ ct.icon.value | image_url: height: 40 }}"
+                      alt=""
+                      width="20"
+                      height="20"
+                      loading="lazy"
+                    >
+                  {%- endif -%}
+                  <span class="cs__chip-name">{{ ct.name.value }}</span>
+                  {%- if ct.age_range.value != blank -%}
+                    <span class="cs__chip-age">{{ ct.age_range.value }}</span>
+                  {%- endif -%}
+                </div>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        {%- endfor -%}
+      {%- endfor -%}
+
+    </div>{%- comment -%} /.cs__grid {%- endcomment -%}
+  </div>{%- comment -%} /.cs__grid-wrap {%- endcomment -%}
+
+  {%- comment -%} Empty state {%- endcomment -%}
+  {%- if semester == blank -%}
+    <p class="cs__empty">Select a semester in the theme editor to display the schedule.</p>
+  {%- elsif sessions.size == 0 -%}
+    <p class="cs__empty">No classes found for this semester. Add class sessions in Shopify Admin → Content → Metaobjects.</p>
+  {%- endif -%}
+
+</div>
+
+{% style %}
+/* ─── Wrapper ─── */
+.cs {
+  padding: {{ section.settings.padding_top }}px {{ section.settings.padding_sides }}px {{ section.settings.padding_bottom }}px;
+  max-width: {{ section.settings.max_width }}px;
+  margin: 0 auto;
+  font-family: var(--font-body--family, sans-serif);
+  color: var(--color-foreground, #111);
+}
+
+/* ─── Header ─── */
+.cs__header {
+  margin-bottom: 16px;
+  text-align: center;
+}
+.cs__title {
+  margin: 0 0 4px;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.cs__subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.65;
+}
+
+/* ─── Day tabs (mobile nav) ─── */
+.cs__day-tabs {
+  display: none;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding: 0 2px;
+}
+.cs__day-tab {
+  flex: 1;
+  padding: 6px 4px;
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: 6px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--color-foreground, #111);
+  transition: background 0.15s, color 0.15s;
+}
+.cs__day-tab.is-active {
+  background: var(--color-primary, #2563eb);
+  border-color: var(--color-primary, #2563eb);
+  color: #fff;
+}
+
+/* ─── Grid container ─── */
+.cs__grid-wrap {
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ─── Grid: CSS Grid layout ─── */
+.cs__grid {
+  display: grid;
+  grid-template-columns: auto repeat(5, 1fr);
+  border-top: 1px solid var(--color-border, #e0e0e0);
+  border-left: 1px solid var(--color-border, #e0e0e0);
+}
+
+/* ─── Cells (shared) ─── */
+.cs__cell {
+  border-right: 1px solid var(--color-border, #e0e0e0);
+  border-bottom: 1px solid var(--color-border, #e0e0e0);
+  box-sizing: border-box;
+  padding: 6px 8px;
+  min-height: {{ section.settings.cell_height }}px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ─── Header row ─── */
+.cs__cell--header {
+  background: var(--color-background-secondary, #f5f5f5);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  justify-content: center;
+  align-items: center;
+  min-height: 36px;
+  text-align: center;
+}
+
+/* ─── Time column ─── */
+.cs__cell--time-col {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--color-background-secondary, #f5f5f5);
+  min-width: 68px;
+  justify-content: center;
+  align-items: flex-start;
+}
+.cs__time-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0.7;
+  padding-top: 2px;
+}
+
+/* ─── Class chip ─── */
+.cs__chip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  color: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+.cs__chip-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+.cs__chip-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.cs__chip-age {
+  font-size: 0.7rem;
+  opacity: 0.85;
+  line-height: 1.2;
+}
+
+/* ─── Empty state ─── */
+.cs__empty {
+  margin: 24px 0 0;
+  text-align: center;
+  opacity: 0.55;
+  font-size: 0.875rem;
+}
+
+/* ══════════════════════════════════════════
+   MOBILE — horizontal swipe carousel
+   ≤ 768px: show time col + 1 day col at a time
+   ══════════════════════════════════════════ */
+@media screen and (max-width: 768px) {
+  .cs__day-tabs {
+    display: flex;
+  }
+
+  .cs__grid-wrap {
+    overflow-x: scroll;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    /* Hide scrollbar visually but keep it functional */
+    scrollbar-width: none;
+  }
+  .cs__grid-wrap::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cs__grid {
+    /* time col (sticky) + 5 day cols each = 100% viewport width of the wrap */
+    grid-template-columns: 68px repeat(5, calc(100% - 68px));
+    width: calc(68px + (100% - 68px) * 5);
+    min-width: calc(68px + (100% - 68px) * 5);
+  }
+
+  /* Each day column snaps into place */
+  .cs__cell--day-col {
+    scroll-snap-align: start;
+  }
+
+  /* Keep time column sticky on scroll */
+  .cs__cell--time-col {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+  }
+
+  /* Slightly taller cells on mobile for readability */
+  .cs__cell {
+    min-height: {{ section.settings.cell_height | plus: 8 }}px;
+  }
+}
+{% endstyle %}
+
+<script>
+(function () {
+  var wrap = document.querySelector('#class-schedule-{{ section.id }} .cs__grid-wrap');
+  var tabs = document.querySelectorAll('#class-schedule-{{ section.id }} .cs__day-tab');
+  if (!wrap || !tabs.length) return;
+
+  function updateTabs() {
+    // Time column is 68px wide; remaining width divided by 5 = one day column width
+    var timeColWidth = 68;
+    var dayColWidth = (wrap.offsetWidth - timeColWidth) ;
+    if (dayColWidth <= 0) return;
+    var scrolled = wrap.scrollLeft;
+    var activeIndex = Math.round(scrolled / dayColWidth);
+    activeIndex = Math.max(0, Math.min(4, activeIndex));
+    tabs.forEach(function (tab, i) {
+      var isActive = i === activeIndex;
+      tab.classList.toggle('is-active', isActive);
+      tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+  }
+
+  wrap.addEventListener('scroll', updateTabs, { passive: true });
+
+  // Tab click → scroll to that day column
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var idx = parseInt(tab.getAttribute('data-day-index'), 10);
+      var timeColWidth = 68;
+      var dayColWidth = wrap.offsetWidth - timeColWidth;
+      wrap.scrollTo({ left: idx * dayColWidth, behavior: 'smooth' });
+    });
+  });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Class Schedule",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Semester"
+    },
+    {
+      "type": "metaobject_reference",
+      "id": "semester_ref",
+      "label": "Semester",
+      "metaobject_type": "semester"
+    },
+    {
+      "type": "header",
+      "content": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Weekly Schedule"
+    },
+    {
+      "type": "header",
+      "content": "Time Slots"
+    },
+    {
+      "type": "range",
+      "id": "time_slot_count",
+      "label": "Number of time slots",
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "text",
+      "id": "time_slot_1_label",
+      "label": "Time slot 1",
+      "default": "9:00 AM"
+    },
+    {
+      "type": "text",
+      "id": "time_slot_2_label",
+      "label": "Time slot 2",
+      "default": "10:00 AM"
+    },
+    {
+      "type": "text",
+      "id": "time_slot_3_label",
+      "label": "Time slot 3",
+      "default": "11:00 AM"
+    },
+    {
+      "type": "text",
+      "id": "time_slot_4_label",
+      "label": "Time slot 4",
+      "default": "12:00 PM"
+    },
+    {
+      "type": "text",
+      "id": "time_slot_5_label",
+      "label": "Time slot 5",
+      "default": "1:00 PM"
+    },
+    {
+      "type": "text",
+      "id": "time_slot_6_label",
+      "label": "Time slot 6",
+      "default": "2:00 PM"
+    },
+    {
+      "type": "text",
+      "id": "time_slot_7_label",
+      "label": "Time slot 7",
+      "default": "3:00 PM"
+    },
+    {
+      "type": "text",
+      "id": "time_slot_8_label",
+      "label": "Time slot 8",
+      "default": "4:00 PM"
+    },
+    {
+      "type": "text",
+      "id": "time_slot_9_label",
+      "label": "Time slot 9",
+      "default": "5:00 PM"
+    },
+    {
+      "type": "text",
+      "id": "time_slot_10_label",
+      "label": "Time slot 10",
+      "default": "6:00 PM"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "cell_height",
+      "label": "Cell min-height (px)",
+      "min": 60,
+      "max": 200,
+      "step": 4,
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Max width (px)",
+      "min": 400,
+      "max": 1400,
+      "step": 20,
+      "default": 1100
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding top (px)",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding bottom (px)",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding_sides",
+      "label": "Padding sides (px)",
+      "min": 0,
+      "max": 80,
+      "step": 4,
+      "default": 16
+    }
+  ],
+  "presets": [
+    {
+      "name": "Class Schedule"
+    }
+  ]
+}
+{% endschema %}
