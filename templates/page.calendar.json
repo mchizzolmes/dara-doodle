@@ -57,7 +57,7 @@
         "padding-block-end": 80
       }
     },
-    "class_schedule_A7jLU9": {
+    "class_schedule_m6Gmhy": {
       "type": "class-schedule",
       "name": "Class Schedule",
       "settings": {
@@ -84,6 +84,6 @@
   },
   "order": [
     "main",
-    "class_schedule_A7jLU9"
+    "class_schedule_m6Gmhy"
   ]
 }
