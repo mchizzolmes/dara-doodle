@@ -24,17 +24,7 @@
   endfor
   assign slot_labels = slot_labels | split: '|'
 
-  comment
-    Fetch and filter class_session entries for selected semester
-  endcomment
-  assign sessions = '' | split: ''
 -%}
-
-{%- for s in shop.metaobjects.class_session.values -%}
-  {%- if semester != blank and s.semester.value.system.handle == semester.system.handle -%}
-    {%- assign sessions = sessions | concat: s -%}
-  {%- endif -%}
-{%- endfor -%}
 
 {%- assign day_labels = 'Mon,Tue,Wed,Thu,Fri' | split: ',' -%}
 {%- assign day_full   = 'Monday,Tuesday,Wednesday,Thursday,Friday' | split: ',' -%}
@@ -98,10 +88,10 @@
         {%- for day_index in (1..5) -%}
           <div class="cs__cell cs__cell--day-col" role="gridcell" data-day="{{ day_index }}" data-slot="{{ slot_index }}">
             {%- comment -%} Find matching sessions for this day + slot {%- endcomment -%}
-            {%- for s in sessions -%}
+            {%- for s in shop.metaobjects.class_session.values -%}
               {%- assign s_day  = s.day_of_week.value  | plus: 0 -%}
               {%- assign s_slot = s.time_slot.value | plus: 0 -%}
-              {%- if s_day == day_index and s_slot == slot_index -%}
+              {%- if semester != blank and s.semester.value.system.handle == semester.system.handle and s_day == day_index and s_slot == slot_index -%}
                 {%- assign ct = s.class_type.value -%}
                 {%- assign chip_color = ct.bg_color.value | default: '#4A90D9' -%}
                 <div
@@ -136,8 +126,16 @@
   {%- comment -%} Empty state {%- endcomment -%}
   {%- if semester == blank -%}
     <p class="cs__empty">Select a semester in the theme editor to display the schedule.</p>
-  {%- elsif sessions.size == 0 -%}
-    <p class="cs__empty">No classes found for this semester. Add class sessions in Shopify Admin → Content → Metaobjects.</p>
+  {%- elsif semester != blank -%}
+    {%- assign found_any = false -%}
+    {%- for s in shop.metaobjects.class_session.values -%}
+      {%- if s.semester.value.system.handle == semester.system.handle -%}
+        {%- assign found_any = true -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {%- unless found_any -%}
+      <p class="cs__empty">No classes found for this semester. Add class sessions in Shopify Admin → Content → Metaobjects.</p>
+    {%- endunless -%}
   {%- endif -%}
 
 </div>
