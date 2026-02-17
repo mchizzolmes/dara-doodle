@@ -29,6 +29,11 @@
 {%- assign day_labels = 'Mon,Tue,Wed,Thu,Fri' | split: ',' -%}
 {%- assign day_full   = 'Monday,Tuesday,Wednesday,Thursday,Friday' | split: ',' -%}
 
+DEBUG: semester handle = {{ semester.system.handle }}
+{% for s in shop.metaobjects.class_session.values %}
+  session semester handle = {{ s.semester.value.system.handle }}<br>
+{% endfor %}
+
 <div class="cs" id="class-schedule-{{ section.id }}" data-section-id="{{ section.id }}">
 
   {%- comment -%} Header {%- endcomment -%}
