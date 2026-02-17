@@ -27,18 +27,14 @@
   comment
     Fetch and filter class_session entries for selected semester
   endcomment
-  assign all_sessions = shop.metaobjects.class_session.values
-  assign sessions = '' | split: ','
+  assign sessions = '' | split: ''
 -%}
 
-{%- paginate shop.metaobjects.class_session.values by 250 -%}
-  {%- assign sessions = '' | split: '' -%}
-  {%- for s in shop.metaobjects.class_session.values -%}
-    {%- if semester != blank and s.semester.value.system.id == semester.system.id -%}
-      {%- assign sessions = sessions | concat: s -%}
-    {%- endif -%}
-  {%- endfor -%}
-{%- endpaginate -%}
+{%- for s in shop.metaobjects.class_session.values -%}
+  {%- if semester != blank and s.semester.value.system.handle == semester.system.handle -%}
+    {%- assign sessions = sessions | concat: s -%}
+  {%- endif -%}
+{%- endfor -%}
 
 {%- assign day_labels = 'Mon,Tue,Wed,Thu,Fri' | split: ',' -%}
 {%- assign day_full   = 'Monday,Tuesday,Wednesday,Thursday,Friday' | split: ',' -%}
