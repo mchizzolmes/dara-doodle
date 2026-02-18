@@ -370,9 +370,9 @@
   }
 
   .cs__grid {
-    /* time col (68px, sticky) + 5 day cols each = full viewport minus time col */
-    grid-template-columns: 68px repeat(5, calc(100vw - 68px));
-    width: calc(68px + (100vw - 68px) * 5);
+    /* --cs-day-col is set by JS to wrap.clientWidth - 68px (time col) */
+    grid-template-columns: 68px repeat(5, var(--cs-day-col, calc(100vw - 68px)));
+    width: calc(68px + var(--cs-day-col, calc(100vw - 68px)) * 5);
     min-width: unset;
   }
 
@@ -398,20 +398,27 @@
 <script>
 (function () {
   var wrap = document.querySelector('#class-schedule-{{ section.id }} .cs__grid-wrap');
+  var grid = document.querySelector('#class-schedule-{{ section.id }} .cs__grid');
   var tabs = document.querySelectorAll('#class-schedule-{{ section.id }} .cs__day-tab');
-  if (!wrap || !tabs.length) return;
+  if (!wrap || !grid || !tabs.length) return;
 
-  function getDayColWidth() {
-    // Match the CSS: 100vw - 68px time col (padding cancelled by negative margins)
-    return window.innerWidth - 68;
+  var TIME_COL = 68; // px — sticky time column width
+
+  function setDayColWidth() {
+    // Use actual rendered container width (excludes scrollbar, respects padding)
+    var dayColWidth = wrap.clientWidth - TIME_COL;
+    if (dayColWidth <= 0) return;
+    grid.style.setProperty('--cs-day-col', dayColWidth + 'px');
+    return dayColWidth;
   }
 
-  var TIME_COL = 68; // px — matches sticky time column width
+  function getDayColWidth() {
+    return wrap.clientWidth - TIME_COL;
+  }
 
   function updateTabs() {
     var dayColWidth = getDayColWidth();
     if (dayColWidth <= 0) return;
-    // scrollLeft=0 shows col 0; each subsequent col is one dayColWidth further right
     var activeIndex = Math.round(wrap.scrollLeft / dayColWidth);
     activeIndex = Math.max(0, Math.min(4, activeIndex));
     tabs.forEach(function (tab, i) {
@@ -421,10 +428,13 @@
     });
   }
 
+  // Set column width on load and on resize
+  setDayColWidth();
+  window.addEventListener('resize', setDayColWidth, { passive: true });
+
   wrap.addEventListener('scroll', updateTabs, { passive: true });
 
-  // Tab click → scroll so that day column's left edge aligns with the snap point
-  // scroll-padding-left:68px means the browser snaps to (TIME_COL + idx * dayColWidth)
+  // Tab click → scroll to that day column
   tabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
       var idx = parseInt(tab.getAttribute('data-day-index'), 10);
