@@ -29,11 +29,6 @@
 {%- assign day_labels = 'Mon,Tue,Wed,Thu,Fri' | split: ',' -%}
 {%- assign day_full   = 'Monday,Tuesday,Wednesday,Thursday,Friday' | split: ',' -%}
 
-DEBUG: semester handle = {{ semester.system.handle }}
-{% for s in shop.metaobjects.class_session.values %}
-  session semester handle = {{ s.semester.value.system.handle }}<br>
-{% endfor %}
-
 <div class="cs" id="class-schedule-{{ section.id }}" data-section-id="{{ section.id }}">
 
   {%- comment -%} Header {%- endcomment -%}
@@ -99,6 +94,8 @@ DEBUG: semester handle = {{ semester.system.handle }}
               {%- if semester != blank and s.semester.value.system.handle == semester.system.handle and s_day == day_index and s_slot == slot_index -%}
                 {%- assign ct = s.class_type.value -%}
                 {%- assign chip_color = ct.bg_color.value | default: '#4A90D9' -%}
+                {%- assign reg_page = s.registration_link.value -%}
+                {%- assign status = s.enrollment_status.value | downcase -%}
                 <div
                   class="cs__chip"
                   style="background-color: {{ chip_color }};"
@@ -107,17 +104,24 @@ DEBUG: semester handle = {{ semester.system.handle }}
                   {%- if ct.icon.value != blank -%}
                     <img
                       class="cs__chip-icon"
-                      src="{{ ct.icon.value | image_url: height: 40 }}"
+                      src="{{ ct.icon.value | image_url: height: 120 }}"
                       alt=""
-                      width="20"
-                      height="20"
                       loading="lazy"
                     >
                   {%- endif -%}
-                  <span class="cs__chip-name">{{ ct.name.value }}</span>
-                  {%- if ct.age_range.value != blank -%}
-                    <span class="cs__chip-age">{{ ct.age_range.value }}</span>
-                  {%- endif -%}
+                  <div class="cs__chip-body">
+                    <span class="cs__chip-name">{{ ct.name.value }}</span>
+                    {%- if ct.age_range.value != blank -%}
+                      <span class="cs__chip-age">{{ ct.age_range.value }}</span>
+                    {%- endif -%}
+                    {%- if status == 'closed' -%}
+                      <span class="cs__chip-btn cs__chip-btn--closed">Closed</span>
+                    {%- elsif reg_page != blank -%}
+                      <a class="cs__chip-btn cs__chip-btn--{{ status }}" href="{{ reg_page.url }}">
+                        {%- if status == 'waitlist' -%}Waitlist{%- else -%}Register{%- endif -%}
+                      </a>
+                    {%- endif -%}
+                  </div>
                 </div>
               {%- endif -%}
             {%- endfor -%}
@@ -257,30 +261,79 @@ DEBUG: semester handle = {{ semester.system.handle }}
 /* ─── Class chip ─── */
 .cs__chip {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 6px 8px;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 6px;
+  padding: 4px 6px 4px 0;
   border-radius: 8px;
   color: #fff;
   width: 100%;
   box-sizing: border-box;
+  min-height: 100%;
 }
 .cs__chip-icon {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
   flex-shrink: 0;
-  margin-bottom: 2px;
+  width: auto;
+  height: 100%;
+  min-height: 60px;
+  max-height: 100px;
+  object-fit: contain;
+  align-self: stretch;
+  padding: 4px 0 4px 4px;
+}
+.cs__chip-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 .cs__chip-name {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   line-height: 1.2;
 }
 .cs__chip-age {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   opacity: 0.85;
   line-height: 1.2;
+}
+/* ─── Enrollment button ─── */
+.cs__chip-btn {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+  white-space: nowrap;
+  align-self: flex-start;
+  letter-spacing: 0.03em;
+}
+.cs__chip-btn--register {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.5);
+}
+.cs__chip-btn--register:hover {
+  background: rgba(255,255,255,0.4);
+}
+.cs__chip-btn--waitlist {
+  background: rgba(0,0,0,0.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+.cs__chip-btn--waitlist:hover {
+  background: rgba(0,0,0,0.25);
+}
+.cs__chip-btn--closed {
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  border: 1px solid rgba(255,255,255,0.2);
+  cursor: default;
 }
 
 /* ─── Empty state ─── */
@@ -312,10 +365,10 @@ DEBUG: semester handle = {{ semester.system.handle }}
   }
 
   .cs__grid {
-    /* time col (sticky) + 5 day cols each = 100% viewport width of the wrap */
-    grid-template-columns: 68px repeat(5, calc(100% - 68px));
-    width: calc(68px + (100% - 68px) * 5);
-    min-width: calc(68px + (100% - 68px) * 5);
+    /* time col (sticky) + 5 day cols, each = viewport width minus time col and side padding */
+    grid-template-columns: 68px repeat(5, calc(100vw - 68px - {{ section.settings.padding_sides | times: 2 }}px));
+    width: calc(68px + (100vw - 68px - {{ section.settings.padding_sides | times: 2 }}px) * 5);
+    min-width: unset;
   }
 
   /* Each day column snaps into place */
@@ -343,13 +396,16 @@ DEBUG: semester handle = {{ semester.system.handle }}
   var tabs = document.querySelectorAll('#class-schedule-{{ section.id }} .cs__day-tab');
   if (!wrap || !tabs.length) return;
 
+  function getDayColWidth() {
+    // Match the CSS: 100vw - 68px time col - side padding * 2
+    var padding = {{ section.settings.padding_sides | times: 2 }};
+    return window.innerWidth - 68 - padding;
+  }
+
   function updateTabs() {
-    // Time column is 68px wide; remaining width divided by 5 = one day column width
-    var timeColWidth = 68;
-    var dayColWidth = (wrap.offsetWidth - timeColWidth) ;
+    var dayColWidth = getDayColWidth();
     if (dayColWidth <= 0) return;
-    var scrolled = wrap.scrollLeft;
-    var activeIndex = Math.round(scrolled / dayColWidth);
+    var activeIndex = Math.round(wrap.scrollLeft / dayColWidth);
     activeIndex = Math.max(0, Math.min(4, activeIndex));
     tabs.forEach(function (tab, i) {
       var isActive = i === activeIndex;
@@ -364,9 +420,7 @@ DEBUG: semester handle = {{ semester.system.handle }}
   tabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
       var idx = parseInt(tab.getAttribute('data-day-index'), 10);
-      var timeColWidth = 68;
-      var dayColWidth = wrap.offsetWidth - timeColWidth;
-      wrap.scrollTo({ left: idx * dayColWidth, behavior: 'smooth' });
+      wrap.scrollTo({ left: idx * getDayColWidth(), behavior: 'smooth' });
     });
   });
 })();
