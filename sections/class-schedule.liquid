@@ -360,6 +360,8 @@
     overflow-x: scroll;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
+    /* Offset snap targets by the sticky time column width so day cols snap flush */
+    scroll-padding-left: 68px;
     /* Hide scrollbar visually but keep it functional */
     scrollbar-width: none;
   }
@@ -404,9 +406,12 @@
     return window.innerWidth - 68;
   }
 
+  var TIME_COL = 68; // px — matches sticky time column width
+
   function updateTabs() {
     var dayColWidth = getDayColWidth();
     if (dayColWidth <= 0) return;
+    // scrollLeft=0 shows col 0; each subsequent col is one dayColWidth further right
     var activeIndex = Math.round(wrap.scrollLeft / dayColWidth);
     activeIndex = Math.max(0, Math.min(4, activeIndex));
     tabs.forEach(function (tab, i) {
@@ -418,7 +423,8 @@
 
   wrap.addEventListener('scroll', updateTabs, { passive: true });
 
-  // Tab click → scroll to that day column
+  // Tab click → scroll so that day column's left edge aligns with the snap point
+  // scroll-padding-left:68px means the browser snaps to (TIME_COL + idx * dayColWidth)
   tabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
       var idx = parseInt(tab.getAttribute('data-day-index'), 10);
