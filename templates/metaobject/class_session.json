@@ -16,7 +16,7 @@
           "type": "custom-liquid",
           "name": "t:names.custom_liquid",
           "settings": {
-            "custom_liquid": ""
+            "custom_liquid": "<script type='application/javascript' data-sawyertools='sawyertools' async id='SA_vwde3zACk4J5_Qyrz-yr0DzUr2M-ddAp' src='https://www.hisawyer.com/embed/vwde3zACk4J5_Qyrz-yr0DzUr2M-ddAp.js'></script>"
           },
           "blocks": {}
         }
