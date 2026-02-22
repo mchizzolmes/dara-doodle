@@ -752,7 +752,7 @@
                 "height": "fit",
                 "custom_height": 100,
                 "inherit_color_scheme": true,
-                "color_scheme": "",
+                "color_scheme": "scheme-58084d4c-a86e-4d0a-855e-a0966e5043f7",
                 "background_media": "none",
                 "video_position": "cover",
                 "background_image_position": "cover",
@@ -768,7 +768,7 @@
                 "open_in_new_tab": false,
                 "placeholder": "",
                 "padding-block-start": 0,
-                "padding-block-end": 0,
+                "padding-block-end": 20,
                 "padding-inline-start": 0,
                 "padding-inline-end": 0
               },
@@ -852,7 +852,7 @@
                 "open_in_new_tab": false,
                 "placeholder": "",
                 "padding-block-start": 0,
-                "padding-block-end": 0,
+                "padding-block-end": 20,
                 "padding-inline-start": 0,
                 "padding-inline-end": 0
               },
@@ -905,7 +905,7 @@
               "type": "text",
               "name": "t:names.text",
               "settings": {
-                "text": "<p>Send us your info and we will get right back to you!</p>",
+                "text": "<p>Or send us your message below and we will get right back to you!</p>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
