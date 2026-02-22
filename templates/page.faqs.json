@@ -669,7 +669,7 @@
         },
         "group_prNRKD": {
           "type": "group",
-          "name": "t:names.group",
+          "name": "Contact column",
           "settings": {
             "content_direction": "column",
             "vertical_on_mobile": true,
