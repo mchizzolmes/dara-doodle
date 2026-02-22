@@ -355,7 +355,7 @@
       },
       "scheme-bb30b4ee-51ca-4765-80c3-cf78f4308afc": {
         "settings": {
-          "background": "#ffffff",
+          "background": "rgba(0,0,0,0)",
           "foreground_heading": "{{ shop.brand.colors.primary[0].background }}",
           "foreground": "{{ shop.brand.colors.primary[0].background }}",
           "primary": "{{ shop.brand.colors.secondary[1].background }}",
