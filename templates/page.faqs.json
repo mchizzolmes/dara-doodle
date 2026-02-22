@@ -159,7 +159,7 @@
                       "type": "text",
                       "name": "t:names.text",
                       "settings": {
-                        "text": "<p>Each class is 40 minutes long, and go for 8-12 sessions. Our schedule is organized into 4 annual semesters. </p>",
+                        "text": "<p>Regular classes last for 40 minutes. This length is designed to keep your children's attention, and excited to come back for more!</p><p>Semesters last for 8-12 sessions depending on the semester. Our schedule is organized into 4 annual semesters so your child can move on to the next level as they grow and develop. </p>",
                         "width": "100%",
                         "max_width": "normal",
                         "alignment": "left",
@@ -200,7 +200,7 @@
                       "type": "text",
                       "name": "t:names.text",
                       "settings": {
-                        "text": "<p>Regular classes last for 40 minutes. This length is designed to keep your children's attention, and excited to come back for more!</p>",
+                        "text": "",
                         "width": "100%",
                         "max_width": "normal",
                         "alignment": "left",
