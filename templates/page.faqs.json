@@ -282,8 +282,8 @@
                       "type": "group",
                       "name": "t:names.group",
                       "settings": {
-                        "content_direction": "column",
-                        "vertical_on_mobile": true,
+                        "content_direction": "row",
+                        "vertical_on_mobile": false,
                         "horizontal_alignment": "flex-start",
                         "vertical_alignment": "center",
                         "align_baseline": false,
@@ -322,48 +322,48 @@
                           "type": "icon",
                           "name": "t:names.icon",
                           "settings": {
-                            "icon": "price_tag",
+                            "icon": "map_pin",
                             "width": 24,
-                            "link": "",
+                            "link": "https://maps.app.goo.gl/w6EgwW3C9rTtC1fE6",
                             "open_in_new_tab": false
+                          },
+                          "blocks": {}
+                        },
+                        "text_CkrPRM": {
+                          "type": "text",
+                          "name": "t:names.text",
+                          "settings": {
+                            "text": "<p>J Anderson's Books</p><p>96 Chatsworth Avenue<br/>Larchmont, NY 10538</p>",
+                            "width": "100%",
+                            "max_width": "normal",
+                            "alignment": "left",
+                            "type_preset": "rte",
+                            "font": "var(--font-body--family)",
+                            "font_size": "1rem",
+                            "line_height": "normal",
+                            "letter_spacing": "normal",
+                            "case": "none",
+                            "wrap": "pretty",
+                            "color": "var(--color-foreground)",
+                            "background": false,
+                            "background_color": "#00000026",
+                            "corner_radius": 0,
+                            "padding-block-start": 0,
+                            "padding-block-end": 0,
+                            "padding-inline-start": 0,
+                            "padding-inline-end": 0
                           },
                           "blocks": {}
                         }
                       },
                       "block_order": [
-                        "icon_PHDV4n"
+                        "icon_PHDV4n",
+                        "text_CkrPRM"
                       ]
-                    },
-                    "text_nY7kQp": {
-                      "type": "text",
-                      "name": "t:names.text",
-                      "settings": {
-                        "text": "<p><a href=\"https://maps.app.goo.gl/w6EgwW3C9rTtC1fE6\" title=\"https://maps.app.goo.gl/w6EgwW3C9rTtC1fE6\">J Anderson's Books</a></p><p><a href=\"https://maps.app.goo.gl/w6EgwW3C9rTtC1fE6\" title=\"https://maps.app.goo.gl/w6EgwW3C9rTtC1fE6\">96 Chatsworth Avenue<br/>Larchmont, NY 10538</a></p>",
-                        "width": "100%",
-                        "max_width": "normal",
-                        "alignment": "left",
-                        "type_preset": "rte",
-                        "font": "var(--font-body--family)",
-                        "font_size": "1rem",
-                        "line_height": "normal",
-                        "letter_spacing": "normal",
-                        "case": "none",
-                        "wrap": "pretty",
-                        "color": "var(--color-foreground)",
-                        "background": false,
-                        "background_color": "#00000026",
-                        "corner_radius": 0,
-                        "padding-block-start": 0,
-                        "padding-block-end": 0,
-                        "padding-inline-start": 0,
-                        "padding-inline-end": 0
-                      },
-                      "blocks": {}
                     }
                   },
                   "block_order": [
-                    "group_NpjiqP",
-                    "text_nY7kQp"
+                    "group_NpjiqP"
                   ]
                 },
                 "accordion_row_hydGGG": {
