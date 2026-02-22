@@ -1,10 +1,10 @@
 {%- comment -%}
   Section: Class Schedule
   Metaobject-driven weekly schedule grid.
-  - Columns: Mon–Fri (5 columns)
-  - Rows: configurable time slots (set in section settings)
+  - Columns: Mon–Fri (5 columns); empty day columns shrink to ghost width on desktop
+  - Rows: configurable time slots; consecutive empty slots collapse to a break divider on desktop
   - Data: class_session metaobjects filtered by selected semester
-  - Mobile: horizontal swipe carousel with sticky time column
+  - Mobile: horizontal swipe carousel with sticky time column; empty day tabs are dimmed
 {%- endcomment -%}
 
 {%- liquid
@@ -24,6 +24,32 @@
   endfor
   assign slot_labels = slot_labels | split: '|'
 
+  comment
+    Pre-compute which (day, slot) pairs have at least one session.
+    We build two lookup strings:
+      day_has_session   — "|1|3|5|" means days 1,3,5 have sessions
+      slot_has_session  — "|1|2|4|" means slots 1,2,4 have sessions
+    Both are pipe-delimited so we can use `contains "|N|"`.
+  endcomment
+  assign day_has_session  = '|'
+  assign slot_has_session = '|'
+
+  if semester != blank
+    for s in shop.metaobjects.class_session.values
+      if s.semester.value.system.handle == semester.system.handle
+        assign s_day  = s.day_of_week.value | plus: 0
+        assign s_slot = s.time_slot.value   | plus: 0
+        assign d_token = s_day  | prepend: '|' | append: '|'
+        assign t_token = s_slot | prepend: '|' | append: '|'
+        unless day_has_session contains d_token
+          assign day_has_session = day_has_session | append: s_day | append: '|'
+        endunless
+        unless slot_has_session contains t_token
+          assign slot_has_session = slot_has_session | append: s_slot | append: '|'
+        endunless
+      endif
+    endfor
+  endif
 -%}
 
 {%- assign day_labels = 'Mon,Tue,Wed,Thu,Fri' | split: ',' -%}
@@ -49,11 +75,18 @@
   {%- comment -%} Mobile day-tab nav {%- endcomment -%}
   <div class="cs__day-tabs" aria-label="Jump to day" role="tablist">
     {%- for label in day_labels -%}
+      {%- assign d_num = forloop.index -%}
+      {%- assign d_token = d_num | prepend: '|' | append: '|' -%}
+      {%- assign day_empty = true -%}
+      {%- if day_has_session contains d_token -%}
+        {%- assign day_empty = false -%}
+      {%- endif -%}
       <button
-        class="cs__day-tab{% if forloop.first %} is-active{% endif %}"
+        class="cs__day-tab{% if forloop.first %} is-active{% endif %}{% if day_empty %} is-empty{% endif %}"
         role="tab"
         aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
         data-day-index="{{ forloop.index0 }}"
+        data-day-empty="{{ day_empty }}"
         aria-controls="cs-col-{{ section.id }}-{{ forloop.index }}"
       >{{ label }}</button>
     {%- endfor -%}
@@ -61,73 +94,144 @@
 
   {%- comment -%} Schedule grid {%- endcomment -%}
   <div class="cs__grid-wrap">
-    <div class="cs__grid" id="cs-grid-{{ section.id }}" role="grid">
+    <div class="cs__grid" id="cs-grid-{{ section.id }}" role="grid"
+      {%- comment -%}
+        Build grid-template-columns inline:
+          - time col: auto
+          - each day col: 1fr if it has sessions, var(--cs-ghost-col, 40px) if empty
+        This is set as a style attribute so it applies before JS runs.
+        On mobile the media query overrides this entirely.
+      {%- endcomment -%}
+      style="grid-template-columns: auto{% for day_index in (1..5) %} {% assign d_tok = day_index | prepend: '|' | append: '|' %}{% if day_has_session contains d_tok %}1fr{% else %}var(--cs-ghost-col, 40px){% endif %}{% endfor %};"
+    >
 
       {%- comment -%} Row 0: column headers {%- endcomment -%}
       <div class="cs__cell cs__cell--header cs__cell--time-col" role="columnheader" aria-label="Time"></div>
       {%- for label in day_labels -%}
+        {%- assign d_tok = forloop.index | prepend: '|' | append: '|' -%}
+        {%- assign col_empty = true -%}
+        {%- if day_has_session contains d_tok -%}{%- assign col_empty = false -%}{%- endif -%}
         <div
-          class="cs__cell cs__cell--header cs__cell--day-col"
+          class="cs__cell cs__cell--header cs__cell--day-col{% if col_empty %} cs__cell--day-empty{% endif %}"
           role="columnheader"
           id="cs-col-{{ section.id }}-{{ forloop.index }}"
           aria-label="{{ day_full[forloop.index0] }}"
           data-day="{{ forloop.index }}"
-        >{{ label }}</div>
+        >
+          {%- if col_empty -%}
+            <span class="cs__day-ghost-label">{{ label }}</span>
+          {%- else -%}
+            {{ label }}
+          {%- endif -%}
+        </div>
       {%- endfor -%}
 
-      {%- comment -%} Rows 1–N: time slots {%- endcomment -%}
+      {%- comment -%}
+        Rows 1–N: time slots.
+        We scan for runs of consecutive empty slots and collapse them into a
+        single break-row. We track state with `in_break` and `break_start_label`.
+      {%- endcomment -%}
+      {%- assign in_break = false -%}
+      {%- assign break_start_label = '' -%}
+      {%- assign break_end_label   = '' -%}
+
       {%- for slot_index in (1..time_slot_count) -%}
         {%- assign slot_label = slot_labels[forloop.index0] -%}
+        {%- assign st_tok = slot_index | prepend: '|' | append: '|' -%}
+        {%- assign slot_active = false -%}
+        {%- if slot_has_session contains st_tok -%}
+          {%- assign slot_active = true -%}
+        {%- endif -%}
 
-        {%- comment -%} Time label cell {%- endcomment -%}
-        <div class="cs__cell cs__cell--time-col" role="rowheader">
-          <span class="cs__time-label">{{ slot_label }}</span>
-        </div>
+        {%- if slot_active == false -%}
+          {%- comment -%} Empty slot — accumulate into break {%- endcomment -%}
+          {%- if in_break == false -%}
+            {%- assign in_break = true -%}
+            {%- assign break_start_label = slot_label -%}
+          {%- endif -%}
+          {%- assign break_end_label = slot_label -%}
 
-        {%- comment -%} Day cells {%- endcomment -%}
-        {%- for day_index in (1..5) -%}
-          <div class="cs__cell cs__cell--day-col" role="gridcell" data-day="{{ day_index }}" data-slot="{{ slot_index }}">
-            {%- comment -%} Find matching sessions for this day + slot {%- endcomment -%}
-            {%- for s in shop.metaobjects.class_session.values -%}
-              {%- assign s_day  = s.day_of_week.value  | plus: 0 -%}
-              {%- assign s_slot = s.time_slot.value | plus: 0 -%}
-              {%- if semester != blank and s.semester.value.system.handle == semester.system.handle and s_day == day_index and s_slot == slot_index -%}
-                {%- assign ct = s.class_type.value -%}
-                {%- assign chip_color = ct.bg_color.value | default: '#4A90D9' -%}
-                {%- assign status = s.enrollment_status.value | downcase -%}
-                {%- assign reg_url = '/pages/class-session/' | append: s.system.handle -%}
-                <div
-                  class="cs__chip"
-                  style="background-color: {{ chip_color }};"
-                  aria-label="{{ ct.name.value }}, {{ ct.age_range.value }}"
-                >
-                  {%- if ct.icon.value != blank -%}
-                    <img
-                      class="cs__chip-icon"
-                      src="{{ ct.icon.value | image_url: height: 120 }}"
-                      alt=""
-                      loading="lazy"
-                    >
-                  {%- endif -%}
-                  <div class="cs__chip-body">
-                    <span class="cs__chip-name">{{ ct.name.value }}</span>
-                    {%- if ct.age_range.value != blank -%}
-                      <span class="cs__chip-age">{{ ct.age_range.value }}</span>
-                    {%- endif -%}
-                    {%- if status == 'closed' -%}
-                      <span class="cs__chip-btn cs__chip-btn--closed">Closed</span>
-                    {%- else -%}
-                      <a class="cs__chip-btn cs__chip-btn--{{ status }}" href="{{ reg_url }}">
-                        {%- if status == 'waitlist' -%}Waitlist{%- else -%}Register{%- endif -%}
-                      </a>
-                    {%- endif -%}
-                  </div>
-                </div>
-              {%- endif -%}
+        {%- else -%}
+          {%- comment -%} Active slot — flush any pending break row first {%- endcomment -%}
+          {%- if in_break -%}
+            {%- assign in_break = false -%}
+            {%- comment -%} Render the break divider row {%- endcomment -%}
+            <div class="cs__cell cs__cell--time-col cs__cell--break" role="rowheader" aria-label="Break {{ break_start_label }} to {{ break_end_label }}">
+              <span class="cs__break-label">{{ break_start_label }}<br>↓<br>{{ break_end_label }}</span>
+            </div>
+            {%- for day_index in (1..5) -%}
+              {%- assign d_tok2 = day_index | prepend: '|' | append: '|' -%}
+              {%- assign bc_empty = true -%}
+              {%- if day_has_session contains d_tok2 -%}{%- assign bc_empty = false -%}{%- endif -%}
+              <div class="cs__cell cs__cell--day-col cs__cell--break{% if bc_empty %} cs__cell--day-empty{% endif %}" role="gridcell" data-day="{{ day_index }}" aria-hidden="true"></div>
             {%- endfor -%}
+          {%- endif -%}
+
+          {%- comment -%} Render the active slot row {%- endcomment -%}
+          <div class="cs__cell cs__cell--time-col" role="rowheader">
+            <span class="cs__time-label">{{ slot_label }}</span>
           </div>
-        {%- endfor -%}
+
+          {%- for day_index in (1..5) -%}
+            {%- assign d_tok3 = day_index | prepend: '|' | append: '|' -%}
+            {%- assign dc_empty = true -%}
+            {%- if day_has_session contains d_tok3 -%}{%- assign dc_empty = false -%}{%- endif -%}
+            <div class="cs__cell cs__cell--day-col{% if dc_empty %} cs__cell--day-empty{% endif %}" role="gridcell" data-day="{{ day_index }}" data-slot="{{ slot_index }}">
+              {%- for s in shop.metaobjects.class_session.values -%}
+                {%- assign s_day  = s.day_of_week.value  | plus: 0 -%}
+                {%- assign s_slot = s.time_slot.value | plus: 0 -%}
+                {%- if semester != blank and s.semester.value.system.handle == semester.system.handle and s_day == day_index and s_slot == slot_index -%}
+                  {%- assign ct = s.class_type.value -%}
+                  {%- assign chip_color = ct.bg_color.value | default: '#4A90D9' -%}
+                  {%- assign status = s.enrollment_status.value | downcase -%}
+                  {%- assign reg_url = '/pages/class-session/' | append: s.system.handle -%}
+                  <div
+                    class="cs__chip"
+                    style="background-color: {{ chip_color }};"
+                    aria-label="{{ ct.name.value }}, {{ ct.age_range.value }}"
+                  >
+                    {%- if ct.icon.value != blank -%}
+                      <img
+                        class="cs__chip-icon"
+                        src="{{ ct.icon.value | image_url: height: 120 }}"
+                        alt=""
+                        loading="lazy"
+                      >
+                    {%- endif -%}
+                    <div class="cs__chip-body">
+                      <span class="cs__chip-name">{{ ct.name.value }}</span>
+                      {%- if ct.age_range.value != blank -%}
+                        <span class="cs__chip-age">{{ ct.age_range.value }}</span>
+                      {%- endif -%}
+                      {%- if status == 'closed' -%}
+                        <span class="cs__chip-btn cs__chip-btn--closed">Closed</span>
+                      {%- else -%}
+                        <a class="cs__chip-btn cs__chip-btn--{{ status }}" href="{{ reg_url }}">
+                          {%- if status == 'waitlist' -%}Waitlist{%- else -%}Register{%- endif -%}
+                        </a>
+                      {%- endif -%}
+                    </div>
+                  </div>
+                {%- endif -%}
+              {%- endfor -%}
+            </div>
+          {%- endfor -%}
+
+        {%- endif -%}
       {%- endfor -%}
+
+      {%- comment -%} Flush any trailing break (slots at the end of the day that are all empty) {%- endcomment -%}
+      {%- if in_break -%}
+        <div class="cs__cell cs__cell--time-col cs__cell--break" role="rowheader" aria-label="Break {{ break_start_label }} to {{ break_end_label }}">
+          <span class="cs__break-label">{{ break_start_label }}<br>↓<br>{{ break_end_label }}</span>
+        </div>
+        {%- for day_index in (1..5) -%}
+          {%- assign d_tok4 = day_index | prepend: '|' | append: '|' -%}
+          {%- assign tb_empty = true -%}
+          {%- if day_has_session contains d_tok4 -%}{%- assign tb_empty = false -%}{%- endif -%}
+          <div class="cs__cell cs__cell--day-col cs__cell--break{% if tb_empty %} cs__cell--day-empty{% endif %}" role="gridcell" data-day="{{ day_index }}" aria-hidden="true"></div>
+        {%- endfor -%}
+      {%- endif -%}
 
     </div>{%- comment -%} /.cs__grid {%- endcomment -%}
   </div>{%- comment -%} /.cs__grid-wrap {%- endcomment -%}
@@ -150,6 +254,11 @@
 </div>
 
 {% style %}
+/* ─── Ghost column width (desktop) ─── */
+:root {
+  --cs-ghost-col: 40px;
+}
+
 /* ─── Wrapper ─── */
 .cs {
   padding: {{ section.settings.padding_top }}px {{ section.settings.padding_sides }}px {{ section.settings.padding_bottom }}px;
@@ -166,12 +275,12 @@
 }
 .cs__title {
   margin: 0 0 4px;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 700;
 }
 .cs__subtitle {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   opacity: 0.65;
 }
 
@@ -189,16 +298,27 @@
   border-radius: 6px;
   background: transparent;
   font-family: inherit;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   color: var(--color-foreground, #111);
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, opacity 0.15s;
 }
 .cs__day-tab.is-active {
   background: var(--color-primary, #2563eb);
   border-color: var(--color-primary, #2563eb);
   color: #fff;
+}
+/* Dimmed tab for days with no classes */
+.cs__day-tab.is-empty {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+.cs__day-tab.is-empty.is-active {
+  background: var(--color-border, #ddd);
+  border-color: var(--color-border, #ddd);
+  color: var(--color-foreground, #111);
 }
 
 /* ─── Grid container ─── */
@@ -208,9 +328,9 @@
 }
 
 /* ─── Grid: CSS Grid layout ─── */
+/* grid-template-columns is set inline by Liquid; this handles mobile override */
 .cs__grid {
   display: grid;
-  grid-template-columns: auto repeat(5, 1fr);
   border-top: 1px solid var(--color-border, #e0e0e0);
   border-left: 1px solid var(--color-border, #e0e0e0);
 }
@@ -230,14 +350,62 @@
 /* ─── Header row ─── */
 .cs__cell--header {
   background: var(--color-background-secondary, #f5f5f5);
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
   justify-content: center;
   align-items: center;
-  min-height: 36px;
+  min-height: 42px;
   text-align: center;
+}
+
+/* ─── Ghost day column (desktop: day has no sessions) ─── */
+.cs__cell--day-empty {
+  background: color-mix(in srgb, var(--color-background-secondary, #f5f5f5) 60%, transparent);
+  padding: 4px 2px;
+  overflow: hidden;
+}
+/* Header ghost cell: rotate label vertically */
+.cs__cell--header.cs__cell--day-empty {
+  align-items: center;
+  justify-content: center;
+  padding: 6px 0;
+}
+.cs__day-ghost-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.45;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+}
+
+/* ─── Break (collapsed empty slots) row ─── */
+.cs__cell--break {
+  min-height: 36px;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    color-mix(in srgb, var(--color-border, #e0e0e0) 50%, transparent) 4px,
+    color-mix(in srgb, var(--color-border, #e0e0e0) 50%, transparent) 5px
+  );
+  justify-content: center;
+  align-items: center;
+}
+.cs__cell--time-col.cs__cell--break {
+  background: var(--color-background-secondary, #f5f5f5);
+}
+.cs__break-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  opacity: 0.5;
+  text-align: center;
+  line-height: 1.3;
+  white-space: nowrap;
 }
 
 /* ─── Time column ─── */
@@ -251,7 +419,7 @@
   align-items: flex-start;
 }
 .cs__time-label {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
   opacity: 0.7;
@@ -264,8 +432,8 @@
   flex-direction: row;
   align-items: stretch;
   gap: 6px;
-  padding: 4px 6px 4px 0;
-  border-radius: 8px;
+  padding: 5px 7px 5px 0;
+  border-radius: 9px;
   color: #fff;
   width: 100%;
   box-sizing: border-box;
@@ -273,8 +441,8 @@
 }
 .cs__chip-icon {
   flex-shrink: 0;
-  width: 52px;
-  height: 52px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
   object-position: center;
   align-self: center;
@@ -285,27 +453,27 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   flex: 1;
   min-width: 0;
 }
 .cs__chip-name {
-  font-size: 0.78rem;
+  font-size: 0.92rem;
   font-weight: 700;
   line-height: 1.2;
 }
 .cs__chip-age {
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   opacity: 0.85;
   line-height: 1.2;
 }
 /* ─── Enrollment button ─── */
 .cs__chip-btn {
   display: inline-block;
-  margin-top: 4px;
-  padding: 2px 7px;
+  margin-top: 5px;
+  padding: 3px 9px;
   border-radius: 20px;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-decoration: none;
   text-align: center;
@@ -369,9 +537,9 @@
     display: none;
   }
 
+  /* On mobile, override the inline grid-template-columns to uniform day cols */
   .cs__grid {
-    /* --cs-day-col is set by JS to wrap.clientWidth - 68px (time col) */
-    grid-template-columns: 68px repeat(5, var(--cs-day-col, calc(100vw - 68px)));
+    grid-template-columns: 68px repeat(5, var(--cs-day-col, calc(100vw - 68px))) !important;
     width: calc(68px + var(--cs-day-col, calc(100vw - 68px)) * 5);
     min-width: unset;
   }
@@ -388,9 +556,28 @@
     z-index: 2;
   }
 
+  /* Ghost columns: full width on mobile (same as active cols) */
+  .cs__cell--day-empty {
+    background: color-mix(in srgb, var(--color-background-secondary, #f5f5f5) 40%, transparent);
+  }
+  .cs__cell--header.cs__cell--day-empty {
+    padding: 6px 8px;
+  }
+  .cs__day-ghost-label {
+    writing-mode: horizontal-tb;
+    transform: none;
+    font-size: 0.75rem;
+    opacity: 0.35;
+  }
+
   /* Slightly taller cells on mobile for readability */
   .cs__cell {
     min-height: {{ section.settings.cell_height | plus: 8 }}px;
+  }
+
+  /* Break row on mobile: allow a bit of height for the label */
+  .cs__cell--break {
+    min-height: 40px;
   }
 }
 {% endstyle %}
@@ -416,6 +603,14 @@
     return wrap.clientWidth - TIME_COL;
   }
 
+  // Build list of day indices that have sessions (non-empty), for tab navigation
+  var nonEmptyDayIndices = [];
+  tabs.forEach(function (tab) {
+    if (tab.getAttribute('data-day-empty') !== 'true') {
+      nonEmptyDayIndices.push(parseInt(tab.getAttribute('data-day-index'), 10));
+    }
+  });
+
   function updateTabs() {
     var dayColWidth = getDayColWidth();
     if (dayColWidth <= 0) return;
@@ -434,9 +629,10 @@
 
   wrap.addEventListener('scroll', updateTabs, { passive: true });
 
-  // Tab click → scroll to that day column
+  // Tab click → scroll to that day column (skip clicks on empty tabs via CSS pointer-events: none)
   tabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
+      if (tab.getAttribute('data-day-empty') === 'true') return;
       var idx = parseInt(tab.getAttribute('data-day-index'), 10);
       wrap.scrollTo({ left: idx * getDayColWidth(), behavior: 'smooth' });
     });
