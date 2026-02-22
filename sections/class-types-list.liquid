@@ -6,7 +6,9 @@
 {%- paginate shop.metaobjects.class_type.values by 250 -%}
   <div class="class-type-container">
     {%- for class_type in shop.metaobjects.class_type.values -%}
-      <div class="class-type-card" style="background-color:{{ class_type.bg_color.value }}">
+      {%- assign shadow_color = class_type.bg_color.value | color_darken: 22 -%}
+      <div class="class-type-card" style="background-color:{{ class_type.bg_color.value }}; --card-shadow: {{ shadow_color }}; --card-border: {{ shadow_color }};">
+
         <div class="class-title-section">
           <div class="class-icon">
             {%- if class_type.icon -%}
@@ -52,6 +54,8 @@
       color:#fff;
       gap:30px;
       text-wrap:stable;
+      border: 2.5px solid var(--card-border);
+      box-shadow: 6px 6px 0px 0px var(--card-shadow);
     }
     .class-title-section {
       display:flex;
