@@ -462,7 +462,7 @@
                 "accordion_row_EUe3dJ": {
                   "type": "_accordion-row",
                   "settings": {
-                    "heading": "Will you do private in-home classes or birthday parties?",
+                    "heading": "Can I switch my child's class or enrollment mid semester?",
                     "open_by_default": false,
                     "icon": "none",
                     "width": 12
@@ -496,6 +496,45 @@
                   },
                   "block_order": [
                     "text_hr7G7T"
+                  ]
+                },
+                "accordion_row_pm47nz": {
+                  "type": "_accordion-row",
+                  "settings": {
+                    "heading": "Will you do private in-home classes or birthday parties?",
+                    "open_by_default": false,
+                    "icon": "none",
+                    "width": 12
+                  },
+                  "blocks": {
+                    "text_kgJzeD": {
+                      "type": "text",
+                      "settings": {
+                        "text": "<p>Yes, and yes! Please email me: info@daradoodle.com</p>",
+                        "width": "100%",
+                        "max_width": "normal",
+                        "alignment": "left",
+                        "type_preset": "rte",
+                        "font": "var(--font-body--family)",
+                        "font_size": "1rem",
+                        "line_height": "normal",
+                        "letter_spacing": "normal",
+                        "case": "none",
+                        "wrap": "pretty",
+                        "color": "var(--color-foreground)",
+                        "background": false,
+                        "background_color": "#00000026",
+                        "corner_radius": 0,
+                        "padding-block-start": 0,
+                        "padding-block-end": 0,
+                        "padding-inline-start": 0,
+                        "padding-inline-end": 0
+                      },
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "text_kgJzeD"
                   ]
                 },
                 "accordion_row_V8iQKX": {
@@ -540,6 +579,7 @@
               },
               "block_order": [
                 "accordion_row_EUe3dJ",
+                "accordion_row_pm47nz",
                 "accordion_row_V8iQKX"
               ]
             },
