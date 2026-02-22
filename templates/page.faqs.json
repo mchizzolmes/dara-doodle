@@ -241,7 +241,7 @@
                       "type": "text",
                       "name": "t:names.text",
                       "settings": {
-                        "text": "<p>Yes, parents and caretakers  will be actively playing along with their children. </p>",
+                        "text": "<p>Yes, parents and caretakers will be actively playing along with their children. </p>",
                         "width": "100%",
                         "max_width": "normal",
                         "alignment": "left",
