@@ -284,7 +284,7 @@
       "settings": {
         "custom_liquid": "<script type='application/javascript' data-sawyertools='sawyertools' async id='SA_2AffLulQurXzVjtJBBzqHNACrDPmRQk5' src='https://www.hisawyer.com/embed/2AffLulQurXzVjtJBBzqHNACrDPmRQk5.js'></script>",
         "color_scheme": "",
-        "section_width": "full-width",
+        "section_width": "page-width",
         "padding-block-start": 0,
         "padding-block-end": 0
       }
