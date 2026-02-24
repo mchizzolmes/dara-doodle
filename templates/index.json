@@ -338,6 +338,7 @@
       "block_order": [
         "group_EaU3gN"
       ],
+      "disabled": true,
       "name": "t:names.custom_section",
       "settings": {
         "content_direction": "column",
@@ -369,7 +370,6 @@
     },
     "custom_liquid_8wh6dp": {
       "type": "custom-liquid",
-      "disabled": true,
       "name": "t:names.custom_liquid",
       "settings": {
         "custom_liquid": "<script type='application/javascript' data-sawyertools='sawyertools' async id='SA_2AffLulQurXzVjtJBBzqHNACrDPmRQk5' src='https://www.hisawyer.com/embed/2AffLulQurXzVjtJBBzqHNACrDPmRQk5.js'></script>",
