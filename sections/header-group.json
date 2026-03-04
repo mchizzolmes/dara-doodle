@@ -18,11 +18,11 @@
           "type": "_announcement",
           "settings": {
             "text": "VOTE FOR US – 2026 BEST OF WESTCHESTER",
-            "link": "https://bestof.westchestermagazine.com/",
+            "link": "",
             "font": "var(--font-subheading--family)",
-            "font_size": "0.75rem",
-            "weight": "",
-            "letter_spacing": "normal",
+            "font_size": "1.125rem",
+            "weight": "600",
+            "letter_spacing": "loose",
             "case": "none"
           },
           "blocks": {}
