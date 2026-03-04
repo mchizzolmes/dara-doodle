@@ -321,7 +321,7 @@
           "foreground": "#ffffff",
           "primary": "{{ shop.brand.colors.secondary[0].background }}",
           "primary_hover": "{{ shop.brand.colors.primary[0].background }}",
-          "border": "#e6e6e6",
+          "border": "rgba(0,0,0,0)",
           "shadow": "#000000",
           "primary_button_background": "rgba(0,0,0,0)",
           "primary_button_text": "#ffffff",
