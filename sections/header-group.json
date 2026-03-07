@@ -17,7 +17,7 @@
         "announcement_BxgCk9": {
           "type": "_announcement",
           "settings": {
-            "text": "<a href=\"https://bestof.westchestermagazine.com/\" target=\"_blank\" title=\"https://bestof.westchestermagazine.com/kids/music-school\">VOTE FOR US – 2026 BEST OF WESTCHESTER</a> <strong>↗</strong>",
+            "text": "<a href=\"https://bestof.westchestermagazine.com/kids/music-school\" target=\"_blank\" title=\"https://bestof.westchestermagazine.com/kids/music-school\">VOTE FOR US – 2026 BEST OF WESTCHESTER </a><strong>↗</strong>",
             "link": "",
             "font": "var(--font-subheading--family)",
             "font_size": "1.125rem",
