@@ -1,0 +1,118 @@
+/*
+ * =====================================================================
+ *  DARA DOODLE — Custom Mega Menu Styles
+ *  asset: custom-mega-menu.css
+ *
+ *  Safe from Horizon theme updates — this file is never overwritten.
+ *  Targets existing Horizon CSS classes; no Liquid modifications needed.
+ * =====================================================================
+ */
+
+/* ─────────────────────────────────────────────────────────────────────
+   DESKTOP DROPDOWN PANEL
+   Softens the full-width "blocky slab" by rounding the bottom corners
+   and refining the shadow.
+   ───────────────────────────────────────────────────────────────────── */
+@media screen and (min-width: 750px) {
+
+  /*
+   * The animated background panel behind all submenus (::after pseudo-element).
+   * Override clip-path to use the `round` keyword, which adds border-radius
+   * to the inset clip without breaking the shadow cutoff.
+   */
+  .overflow-menu::after {
+    border-radius: 0 0 16px 16px;
+    clip-path: inset(0.5px 0 -100px 0 round 0 0 16px 16px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.13);
+  }
+
+  /*
+   * The actual content panel.
+   * overflow: hidden lets border-radius clip the content at the bottom edge.
+   * clip-path animation still works — radius only becomes visible once open.
+   */
+  .menu-list__list-item:where(:not([slot='overflow'])) > .menu-list__submenu {
+    border-radius: 0 0 16px 16px;
+    overflow: hidden;
+  }
+
+  /*
+   * Inner content wrapper — add a pink accent line at the top, and
+   * slightly more generous vertical breathing room.
+   */
+  .menu-list__submenu-inner {
+    border-top: 3px solid var(--color-primary);
+    padding-block-start: 28px;
+    padding-block-end: 32px;
+  }
+
+  /*
+   * Subtle vertical divider between grid columns.
+   * Uses a low-opacity foreground colour so it works in any colour scheme.
+   */
+  .mega-menu__list > .mega-menu__column + .mega-menu__column {
+    border-left: 1px solid rgb(var(--color-foreground-rgb) / 0.1);
+    padding-inline-start: var(--menu-horizontal-gap);
+  }
+
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────
+   PARENT / GROUP HEADING LINKS
+   The top-level links within the dropdown that have sub-links beneath.
+   Give them a stronger visual identity to read as section headers.
+   ───────────────────────────────────────────────────────────────────── */
+.mega-menu__link--parent {
+  display: block;
+  width: 100%;
+  font-weight: 700;
+  font-size: 0.8125rem;   /* 13px — slightly smaller so it reads as a label */
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-foreground-heading);
+  padding-block-end: 8px;
+  margin-block-end: 6px;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.mega-menu__link--parent:hover {
+  color: var(--color-foreground-heading);
+  opacity: 0.8;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────
+   CHILD LINKS
+   Subtle left-slide + colour change on hover gives a sense of direction
+   without anything heavy. `translate` is a modern CSS individual transform
+   (supported in all current browsers).
+   ───────────────────────────────────────────────────────────────────── */
+.mega-menu__link:not(.mega-menu__link--parent) {
+  transition: color 0.16s ease, translate 0.16s ease;
+}
+
+.mega-menu__link:not(.mega-menu__link--parent):hover {
+  color: var(--color-primary);
+  translate: 6px 0;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────
+   MOBILE DRAWER NAV
+   The mobile nav lives in the drawer; these tweaks give it slightly
+   more generous tap targets and cleaner visual rhythm.
+   ───────────────────────────────────────────────────────────────────── */
+@media screen and (max-width: 749px) {
+
+  /* Increase touch target height on drawer nav links */
+  .menu-list__link {
+    padding-block: 6px;
+  }
+
+  /* Slightly bolder top-level labels in the drawer */
+  .menu-list__link-title {
+    letter-spacing: 0.02em;
+  }
+
+}
