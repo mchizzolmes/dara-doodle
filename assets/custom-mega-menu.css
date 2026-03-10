@@ -8,51 +8,46 @@
  * =====================================================================
  */
 
+
 /* ─────────────────────────────────────────────────────────────────────
-   DESKTOP DROPDOWN PANEL
-   Softens the full-width "blocky slab" by rounding the bottom corners
-   and refining the shadow.
+   DESKTOP: NARROW CENTRED DROPDOWN PANEL
+   Constrains the dropdown to the middle ~50vw of the screen instead
+   of spanning the full viewport width.
+
+   Both the animated background panel (::after pseudo-element) and the
+   content panel need matching left/width values, otherwise the visible
+   background and the content won't align.
    ───────────────────────────────────────────────────────────────────── */
 @media screen and (min-width: 750px) {
 
-  /*
-   * The animated background panel behind all submenus (::after pseudo-element).
-   * Override clip-path to use the `round` keyword, which adds border-radius
-   * to the inset clip without breaking the shadow cutoff.
-   */
+  /* Animated background element — the visible "slab" */
   .overflow-menu::after {
+    left: 25vw;
+    width: 50vw;
     border-radius: 0 0 16px 16px;
+    /* `round` keyword adds border-radius to the clip without breaking
+       the downward shadow extension (-100px).                         */
     clip-path: inset(0.5px 0 -100px 0 round 0 0 16px 16px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.13);
+    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.12);
   }
 
-  /*
-   * The actual content panel.
-   * overflow: hidden lets border-radius clip the content at the bottom edge.
-   * clip-path animation still works — radius only becomes visible once open.
-   */
+  /* Content panel — zeroing --padding-inline removes the outer
+     page-edge margin (not needed here since left: 25vw centres us). */
   .menu-list__list-item:where(:not([slot='overflow'])) > .menu-list__submenu {
+    --padding-inline: 0px;
+    left: 25vw;
+    width: 50vw;
     border-radius: 0 0 16px 16px;
     overflow: hidden;
   }
 
-  /*
-   * Inner content wrapper — add a pink accent line at the top, and
-   * slightly more generous vertical breathing room.
-   */
-  .menu-list__submenu-inner {
-    border-top: 3px solid var(--color-primary);
-    padding-block-start: 28px;
-    padding-block-end: 32px;
-  }
-
-  /*
-   * Subtle vertical divider between grid columns.
-   * Uses a low-opacity foreground colour so it works in any colour scheme.
-   */
-  .mega-menu__list > .mega-menu__column + .mega-menu__column {
-    border-left: 1px solid rgb(var(--color-foreground-rgb) / 0.1);
-    padding-inline-start: var(--menu-horizontal-gap);
+  /* Inner wrapper — fixed horizontal padding within the narrowed panel.
+     More-specific selector ensures it wins over the block's own
+     padding-inline: var(--section-padding-inline).                    */
+  .menu-list__list-item:where(:not([slot='overflow'])) > .menu-list__submenu > .menu-list__submenu-inner {
+    padding-block-start: 24px;
+    padding-block-end: 28px;
+    padding-inline: 36px;
   }
 
 }
@@ -60,35 +55,34 @@
 
 /* ─────────────────────────────────────────────────────────────────────
    PARENT / GROUP HEADING LINKS
-   The top-level links within the dropdown that have sub-links beneath.
-   Give them a stronger visual identity to read as section headers.
+   Hierarchy is communicated through size and weight alone — no borders.
+   Reads as a clear section title above its child links.
    ───────────────────────────────────────────────────────────────────── */
 .mega-menu__link--parent {
   display: block;
   width: 100%;
   font-weight: 700;
-  font-size: 0.8125rem;   /* 13px — slightly smaller so it reads as a label */
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 1rem;       /* ~16px — noticeably larger than child links */
+  letter-spacing: 0.01em;
+  text-transform: none;  /* normal case keeps it from reading as a label */
   color: var(--color-foreground-heading);
-  padding-block-end: 8px;
+  padding-block-end: 4px;
   margin-block-end: 6px;
-  border-bottom: 2px solid var(--color-primary);
 }
 
 .mega-menu__link--parent:hover {
-  color: var(--color-foreground-heading);
-  opacity: 0.8;
+  color: var(--color-primary);
 }
 
 
 /* ─────────────────────────────────────────────────────────────────────
    CHILD LINKS
-   Subtle left-slide + colour change on hover gives a sense of direction
-   without anything heavy. `translate` is a modern CSS individual transform
-   (supported in all current browsers).
+   Slightly smaller and muted relative to parent — clear secondary level
+   without any dividers or decorations.
    ───────────────────────────────────────────────────────────────────── */
 .mega-menu__link:not(.mega-menu__link--parent) {
+  font-size: 0.875rem;  /* 14px */
+  color: rgb(var(--color-foreground-rgb) / 0.72);
   transition: color 0.16s ease, translate 0.16s ease;
 }
 
@@ -100,17 +94,14 @@
 
 /* ─────────────────────────────────────────────────────────────────────
    MOBILE DRAWER NAV
-   The mobile nav lives in the drawer; these tweaks give it slightly
-   more generous tap targets and cleaner visual rhythm.
+   Slightly larger tap targets and tighter letter-spacing in the drawer.
    ───────────────────────────────────────────────────────────────────── */
 @media screen and (max-width: 749px) {
 
-  /* Increase touch target height on drawer nav links */
   .menu-list__link {
     padding-block: 6px;
   }
 
-  /* Slightly bolder top-level labels in the drawer */
   .menu-list__link-title {
     letter-spacing: 0.02em;
   }
