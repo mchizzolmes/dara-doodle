@@ -212,7 +212,7 @@
           "background": "#c4e8fc",
           "foreground_heading": "#2d3290",
           "foreground": "#000000",
-          "primary": "{{ shop.brand.colors.secondary[0].background }}",
+          "primary": "{{ shop.brand.colors.secondary[1].background }}",
           "primary_hover": "#1c7ea3",
           "border": "#1d368680",
           "shadow": "#000000",
