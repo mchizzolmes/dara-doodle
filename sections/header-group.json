@@ -79,9 +79,7 @@
           "blocks": {}
         }
       },
-      "custom_css": [
-        ".menu-list__link-title {font-weight: 700; font-size: 1.4rem; color: #2d3290;}"
-      ],
+      "custom_css": [],
       "settings": {
         "logo_position": "left",
         "menu_position": "center",
