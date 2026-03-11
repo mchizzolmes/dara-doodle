@@ -10,41 +10,52 @@
 
 
 /* ─────────────────────────────────────────────────────────────────────
-   DESKTOP: NARROW CENTRED DROPDOWN PANEL
-   Constrains the dropdown to the middle ~50vw of the screen instead
-   of spanning the full viewport width.
+   DESKTOP: NARROW FLOATING-CARD DROPDOWN PANEL
 
-   Both the animated background panel (::after pseudo-element) and the
-   content panel need matching left/width values, otherwise the visible
-   background and the content won't align.
+   How Horizon's dropdown background works:
+     • The visual "slab" behind the dropdown is `.header__underlay-open`
+       — a full-width element whose height animates via JS/CSS vars.
+     • `.header__underlay-open::after` casts the shadow over the slab.
+     • `.menu-list__submenu` is TRANSPARENT — it relies on the underlay
+       for its background colour. (.overflow-menu is a web component
+       and does not have an ::after pseudo-element we can style.)
+
+   Strategy to create a centred 50vw card:
+     1. Override --color-submenu to transparent so the full-width slab
+        colour disappears in the dropdown zone.
+     2. Clip the underlay shadow to a centred 50vw region using
+        inset() so only the "card" area casts a shadow.
+     3. Give .menu-list__submenu its own background, narrow it to 50vw,
+        and centre it. Use #header-component prefix (ID specificity) to
+        beat Horizon's same-class-specificity declarations.
    ───────────────────────────────────────────────────────────────────── */
 @media screen and (min-width: 750px) {
 
-  /* Animated background element — the visible "slab" */
-  .overflow-menu::after {
-    left: 25vw;
-    width: 50vw;
-    border-radius: 0 0 16px 16px;
-    /* `round` keyword adds border-radius to the clip without breaking
-       the downward shadow extension (-100px).                         */
-    clip-path: inset(0.5px 0 -100px 0 round 0 0 16px 16px);
-    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.12);
+  /* 1. No full-width coloured slab in the dropdown zone */
+  .header__underlay {
+    --color-submenu: transparent;
   }
 
-  /* Content panel — zeroing --padding-inline removes the outer
-     page-edge margin (not needed here since left: 25vw centres us). */
-  .menu-list__list-item:where(:not([slot='overflow'])) > .menu-list__submenu {
-    --padding-inline: 0px;
+  /* 2. Shadow clipped to the centre 50vw with rounded bottom corners.
+        inset(top right bottom left round ...) — right/left are insets
+        from each respective edge, so 25vw from each side leaves a 50vw
+        visible window in the middle.                                    */
+  .header__underlay-open::after {
+    clip-path: inset(var(--header-height) 25vw -100px 25vw round 0 0 16px 16px); /* stylelint-disable-line */
+  }
+
+  /* 3. Submenu = floating card, centred in the viewport */
+  #header-component .menu-list__list-item:where(:not([slot='overflow'])) > .menu-list__submenu {
+    --padding-inline: 0px;   /* suppress Horizon's page-edge margin */
     left: 25vw;
     width: 50vw;
+    background-color: var(--color-background);
     border-radius: 0 0 16px 16px;
     overflow: hidden;
   }
 
-  /* Inner wrapper — fixed horizontal padding within the narrowed panel.
-     More-specific selector ensures it wins over the block's own
-     padding-inline: var(--section-padding-inline).                    */
-  .menu-list__list-item:where(:not([slot='overflow'])) > .menu-list__submenu > .menu-list__submenu-inner {
+  /* Inner wrapper padding within the narrowed card */
+  #header-component .menu-list__list-item:where(:not([slot='overflow'])) > .menu-list__submenu > .menu-list__submenu-inner {
     padding-block-start: 24px;
     padding-block-end: 28px;
     padding-inline: 36px;
@@ -55,8 +66,7 @@
 
 /* ─────────────────────────────────────────────────────────────────────
    PARENT / GROUP HEADING LINKS
-   Hierarchy is communicated through size and weight alone — no borders.
-   Reads as a clear section title above its child links.
+   Hierarchy communicated through size and weight only — no decorations.
    ───────────────────────────────────────────────────────────────────── */
 .mega-menu__link--parent {
   display: block;
@@ -64,7 +74,7 @@
   font-weight: 700;
   font-size: 1rem;       /* ~16px — noticeably larger than child links */
   letter-spacing: 0.01em;
-  text-transform: none;  /* normal case keeps it from reading as a label */
+  text-transform: none;  /* normal case reads as heading, not a label */
   color: var(--color-foreground-heading);
   padding-block-end: 4px;
   margin-block-end: 6px;
@@ -77,8 +87,7 @@
 
 /* ─────────────────────────────────────────────────────────────────────
    CHILD LINKS
-   Slightly smaller and muted relative to parent — clear secondary level
-   without any dividers or decorations.
+   Smaller and muted — clearly subordinate without any dividers.
    ───────────────────────────────────────────────────────────────────── */
 .mega-menu__link:not(.mega-menu__link--parent) {
   font-size: 0.875rem;  /* 14px */
