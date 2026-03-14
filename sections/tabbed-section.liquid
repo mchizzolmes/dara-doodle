@@ -69,12 +69,14 @@
       {%- assign has_panel_image = false -%}
       {%- if tab.panel_image.value != blank -%}{%- assign has_panel_image = true -%}{%- endif -%}
       {%- assign has_two_col = false -%}
-      {%- if tab.second_column.value != blank -%}{%- assign has_two_col = true -%}{%- endif -%}
+      {%- if tab.second_column != blank -%}{%- assign has_two_col = true -%}{%- endif -%}
+      {%- assign panel_color = tab.color.value | default: '#EB0D8B' -%}
       <div
         class="qi__panel{% if forloop.first %} is-active{% endif %}"
         role="tabpanel"
         id="qi-panel-{{ section.id }}-{{ forloop.index }}"
         aria-labelledby="qi-tab-{{ section.id }}-{{ forloop.index }}"
+        style="--c: {{ panel_color }};"
         {% unless forloop.first %}hidden{% endunless %}
       >
         <div class="qi__panel-inner{% if has_panel_image %} qi__panel-inner--with-image{% endif %}">
@@ -98,7 +100,7 @@
             </div>
             {%- if has_two_col -%}
               <div class="qi__col">
-                <div class="qi__content">{{ tab.second_column.value | metafield_tag }}</div>
+                <div class="qi__content">{{ tab.second_column | metafield_tag }}</div>
               </div>
             {%- endif -%}
           </div>
@@ -159,8 +161,8 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 1.75rem 2.5rem;
-  margin-bottom: 2.5rem;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 /* ── Individual tab button ── */
@@ -168,61 +170,71 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.45rem;
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
   font-family: inherit;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, opacity 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-.qi__btn:hover        { transform: translateY(-4px); }
-.qi__btn.is-active    { transform: translateY(-4px); }
+.qi__btn:hover     { transform: translateY(-3px); }
+.qi__btn.is-active { transform: translateY(-3px); }
 
-/* ── Icon container — chunky rounded-square (Doodle Bug mark shape) ── */
+/* ── Icon container — chunky rounded-square, greyscale when inactive ── */
 .qi__icon-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 88px;
-  height: 96px;
-  border-radius: 22px;
-  background: color-mix(in srgb, var(--c) 14%, white);
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+  width: 72px;
+  height: 78px;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.06);
+  filter: grayscale(1);
+  opacity: 0.45;
+  transition: background 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
   overflow: hidden;
 }
 
-.qi__btn:hover    .qi__icon-wrap { background: color-mix(in srgb, var(--c) 24%, white); }
+.qi__btn:hover .qi__icon-wrap {
+  background: color-mix(in srgb, var(--c) 18%, white);
+  filter: grayscale(0.2);
+  opacity: 0.75;
+}
+
 .qi__btn.is-active .qi__icon-wrap {
   background: var(--c);
-  box-shadow: 5px 5px 0 0 var(--cs);
+  filter: none;
+  opacity: 1;
+  box-shadow: 4px 4px 0 0 var(--cs);
 }
 
 /* ── Icon image ── */
 .qi__icon-img {
-  width: 66px;
-  height: 66px;
+  width: 54px;
+  height: 54px;
   object-fit: contain;
   object-position: center;
 }
 
 /* ── Fallback SVG ── */
-.qi__icon-fallback              { width: 46px; height: 46px; color: var(--c); }
+.qi__icon-fallback                    { width: 38px; height: 38px; color: #666; }
 .qi__btn.is-active .qi__icon-fallback { color: white; }
 
 /* ── Tab label ── */
 .qi__btn-label {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  color: #555;
+  color: #aaa;
   text-align: center;
-  max-width: 100px;
+  max-width: 90px;
   line-height: 1.2;
   transition: color 0.2s ease;
 }
 
+.qi__btn:hover    .qi__btn-label { color: #666; }
 .qi__btn.is-active .qi__btn-label { color: var(--c); }
 
 /* ── Empty state ── */
@@ -237,71 +249,77 @@
 
 .qi__panel.is-active {
   display: block;
-  animation: qi-fade 0.25s ease;
+  animation: qi-fade 0.2s ease;
 }
 
 @keyframes qi-fade {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Panel inner: optional side image ── */
+/* ── Panel inner ── */
+.qi__panel-inner {
+  max-width: 720px; /* keeps single-column text from stretching too wide */
+}
+
 .qi__panel-inner--with-image {
   display: flex;
-  gap: 2.5rem;
+  gap: 2rem;
   align-items: flex-start;
+  max-width: none;
 }
 
 .qi__panel-image img {
-  width: 220px;
+  width: 200px;
   flex-shrink: 0;
-  border-radius: 18px;
+  border-radius: 14px;
   object-fit: cover;
 }
 
-.qi__panel-text         { flex: 1; min-width: 0; }
+.qi__panel-text { flex: 1; min-width: 0; }
 
 /* ── Two-column text layout ── */
 .qi__panel-text--two-col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2.5rem;
+  gap: 2rem;
 }
 
-/* ── Heading ── */
+/* ── Heading — colored to match active tab ── */
 .qi__heading {
-  margin: 0 0 0.75rem;
-  font-size: 1.35rem;
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
   font-weight: 700;
   line-height: 1.25;
+  color: var(--c);
 }
 
 /* ── Rich text content ── */
 .qi__content {
-  font-size: 0.9875rem;
-  line-height: 1.75;
+  font-size: 0.9375rem;
+  line-height: 1.6;
   color: #444;
 }
 
-.qi__content p            { margin: 0 0 0.75rem; }
+.qi__content p            { margin: 0 0 0.5rem; }
 .qi__content p:last-child { margin-bottom: 0; }
 .qi__content ul,
-.qi__content ol           { padding-left: 1.5rem; margin: 0 0 0.75rem; }
-.qi__content li           { margin-bottom: 0.35rem; }
+.qi__content ol           { padding-left: 1.25rem; margin: 0 0 0.5rem; }
+.qi__content li           { margin-bottom: 0.25rem; }
 .qi__content strong       { font-weight: 700; }
 
 /* ── Mobile ── */
 @media screen and (max-width: 640px) {
-  .qi__nav          { gap: 1.25rem 1.75rem; margin-bottom: 2rem; }
+  .qi__nav        { gap: 0.6rem 1rem; margin-bottom: 1.25rem; }
 
-  .qi__icon-wrap    { width: 72px; height: 80px; border-radius: 18px; }
-  .qi__icon-img     { width: 54px; height: 54px; }
-  .qi__icon-fallback { width: 38px; height: 38px; }
-  .qi__btn-label    { font-size: 0.8rem; max-width: 80px; }
+  .qi__icon-wrap  { width: 62px; height: 68px; border-radius: 15px; }
+  .qi__icon-img   { width: 46px; height: 46px; }
+  .qi__icon-fallback { width: 32px; height: 32px; }
+  .qi__btn-label  { font-size: 0.75rem; max-width: 72px; }
 
   .qi__panel-inner--with-image { flex-direction: column; }
   .qi__panel-image img         { width: 100%; }
-  .qi__panel-text--two-col     { grid-template-columns: 1fr; gap: 1.5rem; }
+  .qi__panel-text--two-col     { grid-template-columns: 1fr; gap: 1rem; }
 }
 {% endstyle %}
 
@@ -322,7 +340,7 @@
       "min": 0,
       "max": 120,
       "step": 4,
-      "default": 40
+      "default": 24
     },
     {
       "type": "range",
@@ -331,7 +349,7 @@
       "min": 0,
       "max": 120,
       "step": 4,
-      "default": 40
+      "default": 24
     },
     {
       "type": "range",
