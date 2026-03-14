@@ -1,31 +1,36 @@
 {%- comment -%}
   Section: Quick Info Tabs
-  Redesigned: open integrated layout, chunky brand-aligned icon buttons,
-  optional two-column content and optional panel image per tab.
+  Metaobject-driven: pulls from shop.metaobjects.tabs.values
+  Fields expected on the 'tabs' metaobject type:
+    title         (single_line_text_field)
+    color         (color)
+    icon          (file_reference — image)
+    content       (rich_text_field)
+    second_column (rich_text_field, optional)
+    panel_image   (file_reference — image, optional)
 {%- endcomment -%}
 
 <div class="qi" id="qi-{{ section.id }}">
 
   {%- comment -%} Centered icon-button tab nav {%- endcomment -%}
   <div class="qi__nav" role="tablist" aria-label="Info tabs">
-    {%- for block in section.blocks -%}
-      {%- assign btn_color = block.settings.color | default: '#EB0D8B' -%}
+    {%- for tab in shop.metaobjects.tabs.values -%}
+      {%- assign btn_color = tab.color.value | default: '#EB0D8B' -%}
       {%- assign btn_shadow = btn_color | color_darken: 22 -%}
       <button
         class="qi__btn{% if forloop.first %} is-active{% endif %}"
         role="tab"
         aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
-        aria-controls="qi-panel-{{ block.id }}"
-        id="qi-tab-{{ block.id }}"
+        aria-controls="qi-panel-{{ section.id }}-{{ forloop.index }}"
+        id="qi-tab-{{ section.id }}-{{ forloop.index }}"
         data-tab-index="{{ forloop.index0 }}"
         style="--c: {{ btn_color }}; --cs: {{ btn_shadow }};"
-        {{ block.shopify_attributes }}
       >
         <span class="qi__icon-wrap">
-          {%- if block.settings.icon_image != blank -%}
+          {%- if tab.icon.value != blank -%}
             <img
               class="qi__icon-img"
-              src="{{ block.settings.icon_image | image_url: width: 160 }}"
+              src="{{ tab.icon.value | image_url: width: 160 }}"
               alt=""
               loading="lazy"
               width="70"
@@ -45,23 +50,25 @@
             </svg>
           {%- endif -%}
         </span>
-        <span class="qi__btn-label">{{ block.settings.tab_title }}</span>
+        <span class="qi__btn-label">{{ tab.title.value }}</span>
       </button>
+    {%- else -%}
+      <p class="qi__empty">No tabs found. Add entries to the <em>Tabs</em> metaobject in Shopify Admin → Content → Metaobjects.</p>
     {%- endfor -%}
   </div>
 
   {%- comment -%} Tab panels {%- endcomment -%}
   <div class="qi__panels">
-    {%- for block in section.blocks -%}
+    {%- for tab in shop.metaobjects.tabs.values -%}
       {%- assign has_panel_image = false -%}
-      {%- if block.settings.panel_image != blank -%}{%- assign has_panel_image = true -%}{%- endif -%}
+      {%- if tab.panel_image.value != blank -%}{%- assign has_panel_image = true -%}{%- endif -%}
       {%- assign has_two_col = false -%}
-      {%- if block.settings.second_column != blank -%}{%- assign has_two_col = true -%}{%- endif -%}
+      {%- if tab.second_column.value != blank -%}{%- assign has_two_col = true -%}{%- endif -%}
       <div
         class="qi__panel{% if forloop.first %} is-active{% endif %}"
         role="tabpanel"
-        id="qi-panel-{{ block.id }}"
-        aria-labelledby="qi-tab-{{ block.id }}"
+        id="qi-panel-{{ section.id }}-{{ forloop.index }}"
+        aria-labelledby="qi-tab-{{ section.id }}-{{ forloop.index }}"
         {% unless forloop.first %}hidden{% endunless %}
       >
         <div class="qi__panel-inner{% if has_panel_image %} qi__panel-inner--with-image{% endif %}">
@@ -69,8 +76,8 @@
           {%- if has_panel_image -%}
             <div class="qi__panel-image">
               <img
-                src="{{ block.settings.panel_image | image_url: width: 600 }}"
-                alt="{{ block.settings.heading }}"
+                src="{{ tab.panel_image.value | image_url: width: 600 }}"
+                alt="{{ tab.title.value }}"
                 loading="lazy"
               >
             </div>
@@ -78,17 +85,17 @@
 
           <div class="qi__panel-text{% if has_two_col %} qi__panel-text--two-col{% endif %}">
             <div class="qi__col">
-              {%- if block.settings.heading != blank -%}
-                <h3 class="qi__heading">{{ block.settings.heading }}</h3>
+              {%- if tab.title.value != blank -%}
+                <h3 class="qi__heading">{{ tab.title.value }}</h3>
               {%- endif -%}
-              <div class="qi__content">{{ block.settings.content }}</div>
-              {%- if block.settings.button_text != blank and block.settings.button_link != blank -%}
-                <a href="{{ block.settings.button_link }}" class="qi__cta">{{ block.settings.button_text }}</a>
+              <div class="qi__content">{{ tab.content.value | metafield_tag }}</div>
+              {%- if tab.cta_text.value != blank and tab.cta_link.value != blank -%}
+                <a href="{{ tab.cta_link.value }}" class="qi__cta">{{ tab.cta_text.value }}</a>
               {%- endif -%}
             </div>
             {%- if has_two_col -%}
               <div class="qi__col">
-                <div class="qi__content">{{ block.settings.second_column }}</div>
+                <div class="qi__content">{{ tab.second_column.value | metafield_tag }}</div>
               </div>
             {%- endif -%}
           </div>
@@ -230,6 +237,13 @@
 
 .qi__btn.is-active .qi__btn-label {
   color: var(--c);
+}
+
+/* ── Empty state ── */
+.qi__empty {
+  text-align: center;
+  opacity: 0.55;
+  font-size: 0.875rem;
 }
 
 /* ── Panels ── */
@@ -394,107 +408,9 @@
       "default": 16
     }
   ],
-  "blocks": [
-    {
-      "type": "tab",
-      "name": "Tab",
-      "settings": [
-        {
-          "type": "header",
-          "content": "Button"
-        },
-        {
-          "type": "text",
-          "id": "tab_title",
-          "label": "Tab label",
-          "default": "Tab"
-        },
-        {
-          "type": "color",
-          "id": "color",
-          "label": "Tab color",
-          "default": "#EB0D8B"
-        },
-        {
-          "type": "image_picker",
-          "id": "icon_image",
-          "label": "Icon image"
-        },
-        {
-          "type": "header",
-          "content": "Panel content"
-        },
-        {
-          "type": "text",
-          "id": "heading",
-          "label": "Heading",
-          "default": "Heading"
-        },
-        {
-          "type": "richtext",
-          "id": "content",
-          "label": "Content (first column)",
-          "default": "<p>Add your content here.</p>"
-        },
-        {
-          "type": "richtext",
-          "id": "second_column",
-          "label": "Second column (optional — leave blank for single column)"
-        },
-        {
-          "type": "image_picker",
-          "id": "panel_image",
-          "label": "Panel image (optional — appears beside content)"
-        },
-        {
-          "type": "header",
-          "content": "Call to action (optional)"
-        },
-        {
-          "type": "text",
-          "id": "button_text",
-          "label": "Button text"
-        },
-        {
-          "type": "url",
-          "id": "button_link",
-          "label": "Button link"
-        }
-      ]
-    }
-  ],
   "presets": [
     {
-      "name": "Quick Info Tabs",
-      "blocks": [
-        {
-          "type": "tab",
-          "settings": {
-            "tab_title": "Location",
-            "color": "#25B1E6",
-            "heading": "Where to Find Us",
-            "content": "<p>Classes are held at J. Anderson's Books in Larchmont, NY. We also offer sessions at Larchmont Temple and Manor Beach during summer months.</p>"
-          }
-        },
-        {
-          "type": "tab",
-          "settings": {
-            "tab_title": "What to Expect",
-            "color": "#EB0D8B",
-            "heading": "Your First Class",
-            "content": "<p>Wear comfortable clothes for movement. We'll sing, dance, and explore rhythm together. Caregivers participate alongside children—no musical experience needed!</p>"
-          }
-        },
-        {
-          "type": "tab",
-          "settings": {
-            "tab_title": "Announcements",
-            "color": "#F7982F",
-            "heading": "Latest Updates",
-            "content": "<p>Spring enrollment is now open! Use code NEWBIE for 50% off your first class.</p>"
-          }
-        }
-      ]
+      "name": "Quick Info Tabs"
     }
   ]
 }
