@@ -1,7 +1,9 @@
 {%- comment -%}
   Section: Quick Info Tabs
-  Metaobject-driven: pulls from shop.metaobjects.tabs.values
-  Fields expected on the 'tabs' metaobject type:
+  Each block is a lightweight reference to one 'tabs' metaobject entry.
+  Add/remove/reorder blocks in the theme editor to control which tabs
+  appear and in what order for this specific section instance.
+  Fields on the 'tabs' metaobject type:
     title         (single_line_text_field)
     color         (color)
     icon          (file_reference — image)
@@ -14,7 +16,9 @@
 
   {%- comment -%} Centered icon-button tab nav {%- endcomment -%}
   <div class="qi__nav" role="tablist" aria-label="Info tabs">
-    {%- for tab in shop.metaobjects.tabs.values -%}
+    {%- for block in section.blocks -%}
+      {%- assign tab = block.settings.tab_ref -%}
+      {%- if tab == blank -%}{%- continue -%}{%- endif -%}
       {%- assign btn_color = tab.color.value | default: '#EB0D8B' -%}
       {%- assign btn_shadow = btn_color | color_darken: 22 -%}
       <button
@@ -25,6 +29,7 @@
         id="qi-tab-{{ section.id }}-{{ forloop.index }}"
         data-tab-index="{{ forloop.index0 }}"
         style="--c: {{ btn_color }}; --cs: {{ btn_shadow }};"
+        {{ block.shopify_attributes }}
       >
         <span class="qi__icon-wrap">
           {%- if tab.icon.value != blank -%}
@@ -37,7 +42,6 @@
               height="70"
             >
           {%- else -%}
-            {%- comment -%} Fallback: Doodle Bug logo-mark style SVG {%- endcomment -%}
             <svg class="qi__icon-fallback" viewBox="0 0 48 52" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">
               <line x1="8" y1="9" x2="3" y2="2" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
               <line x1="15" y1="7" x2="12" y2="1" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
@@ -53,13 +57,15 @@
         <span class="qi__btn-label">{{ tab.title.value }}</span>
       </button>
     {%- else -%}
-      <p class="qi__empty">No tabs found. Add entries to the <em>Tabs</em> metaobject in Shopify Admin → Content → Metaobjects.</p>
+      <p class="qi__empty">Add tabs using the <em>+</em> button in the theme editor.</p>
     {%- endfor -%}
   </div>
 
   {%- comment -%} Tab panels {%- endcomment -%}
   <div class="qi__panels">
-    {%- for tab in shop.metaobjects.tabs.values -%}
+    {%- for block in section.blocks -%}
+      {%- assign tab = block.settings.tab_ref -%}
+      {%- if tab == blank -%}{%- continue -%}{%- endif -%}
       {%- assign has_panel_image = false -%}
       {%- if tab.panel_image.value != blank -%}{%- assign has_panel_image = true -%}{%- endif -%}
       {%- assign has_two_col = false -%}
@@ -89,9 +95,6 @@
                 <h3 class="qi__heading">{{ tab.title.value }}</h3>
               {%- endif -%}
               <div class="qi__content">{{ tab.content.value | metafield_tag }}</div>
-              {%- if tab.cta_text.value != blank and tab.cta_link.value != blank -%}
-                <a href="{{ tab.cta_link.value }}" class="qi__cta">{{ tab.cta_text.value }}</a>
-              {%- endif -%}
             </div>
             {%- if has_two_col -%}
               <div class="qi__col">
@@ -175,13 +178,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.qi__btn:hover {
-  transform: translateY(-4px);
-}
-
-.qi__btn.is-active {
-  transform: translateY(-4px);
-}
+.qi__btn:hover        { transform: translateY(-4px); }
+.qi__btn.is-active    { transform: translateY(-4px); }
 
 /* ── Icon container — chunky rounded-square (Doodle Bug mark shape) ── */
 .qi__icon-wrap {
@@ -196,16 +194,13 @@
   overflow: hidden;
 }
 
-.qi__btn:hover .qi__icon-wrap {
-  background: color-mix(in srgb, var(--c) 24%, white);
-}
-
+.qi__btn:hover    .qi__icon-wrap { background: color-mix(in srgb, var(--c) 24%, white); }
 .qi__btn.is-active .qi__icon-wrap {
   background: var(--c);
   box-shadow: 5px 5px 0 0 var(--cs);
 }
 
-/* ── Icon image (uploaded) ── */
+/* ── Icon image ── */
 .qi__icon-img {
   width: 66px;
   height: 66px;
@@ -214,15 +209,8 @@
 }
 
 /* ── Fallback SVG ── */
-.qi__icon-fallback {
-  width: 46px;
-  height: 46px;
-  color: var(--c);
-}
-
-.qi__btn.is-active .qi__icon-fallback {
-  color: white;
-}
+.qi__icon-fallback              { width: 46px; height: 46px; color: var(--c); }
+.qi__btn.is-active .qi__icon-fallback { color: white; }
 
 /* ── Tab label ── */
 .qi__btn-label {
@@ -235,9 +223,7 @@
   transition: color 0.2s ease;
 }
 
-.qi__btn.is-active .qi__btn-label {
-  color: var(--c);
-}
+.qi__btn.is-active .qi__btn-label { color: var(--c); }
 
 /* ── Empty state ── */
 .qi__empty {
@@ -247,9 +233,7 @@
 }
 
 /* ── Panels ── */
-.qi__panel {
-  display: none;
-}
+.qi__panel { display: none; }
 
 .qi__panel.is-active {
   display: block;
@@ -261,7 +245,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Panel inner: optional side image layout ── */
+/* ── Panel inner: optional side image ── */
 .qi__panel-inner--with-image {
   display: flex;
   gap: 2.5rem;
@@ -275,10 +259,7 @@
   object-fit: cover;
 }
 
-.qi__panel-text {
-  flex: 1;
-  min-width: 0;
-}
+.qi__panel-text         { flex: 1; min-width: 0; }
 
 /* ── Two-column text layout ── */
 .qi__panel-text--two-col {
@@ -302,71 +283,25 @@
   color: #444;
 }
 
-.qi__content p             { margin: 0 0 0.75rem; }
-.qi__content p:last-child  { margin-bottom: 0; }
+.qi__content p            { margin: 0 0 0.75rem; }
+.qi__content p:last-child { margin-bottom: 0; }
 .qi__content ul,
-.qi__content ol            { padding-left: 1.5rem; margin: 0 0 0.75rem; }
-.qi__content li            { margin-bottom: 0.35rem; }
-.qi__content strong        { font-weight: 700; }
-
-/* ── CTA button ── */
-.qi__cta {
-  display: inline-block;
-  margin-top: 1.25rem;
-  padding: 0.6rem 1.5rem;
-  background: var(--color-primary, #EB0D8B);
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.875rem;
-  text-decoration: none;
-  border-radius: 30px;
-  transition: opacity 0.2s ease;
-}
-
-.qi__cta:hover {
-  opacity: 0.85;
-}
+.qi__content ol           { padding-left: 1.5rem; margin: 0 0 0.75rem; }
+.qi__content li           { margin-bottom: 0.35rem; }
+.qi__content strong       { font-weight: 700; }
 
 /* ── Mobile ── */
 @media screen and (max-width: 640px) {
-  .qi__nav {
-    gap: 1.25rem 1.75rem;
-    margin-bottom: 2rem;
-  }
+  .qi__nav          { gap: 1.25rem 1.75rem; margin-bottom: 2rem; }
 
-  .qi__icon-wrap {
-    width: 72px;
-    height: 80px;
-    border-radius: 18px;
-  }
+  .qi__icon-wrap    { width: 72px; height: 80px; border-radius: 18px; }
+  .qi__icon-img     { width: 54px; height: 54px; }
+  .qi__icon-fallback { width: 38px; height: 38px; }
+  .qi__btn-label    { font-size: 0.8rem; max-width: 80px; }
 
-  .qi__icon-img {
-    width: 54px;
-    height: 54px;
-  }
-
-  .qi__icon-fallback {
-    width: 38px;
-    height: 38px;
-  }
-
-  .qi__btn-label {
-    font-size: 0.8rem;
-    max-width: 80px;
-  }
-
-  .qi__panel-inner--with-image {
-    flex-direction: column;
-  }
-
-  .qi__panel-image img {
-    width: 100%;
-  }
-
-  .qi__panel-text--two-col {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
+  .qi__panel-inner--with-image { flex-direction: column; }
+  .qi__panel-image img         { width: 100%; }
+  .qi__panel-text--two-col     { grid-template-columns: 1fr; gap: 1.5rem; }
 }
 {% endstyle %}
 
@@ -406,6 +341,20 @@
       "max": 80,
       "step": 4,
       "default": 16
+    }
+  ],
+  "blocks": [
+    {
+      "type": "tab",
+      "name": "Tab",
+      "settings": [
+        {
+          "type": "metaobject",
+          "id": "tab_ref",
+          "label": "Tab",
+          "metaobject_type": "tabs"
+        }
+      ]
     }
   ],
   "presets": [
