@@ -94,7 +94,7 @@
               {%- if tab.title.value != blank -%}
                 <h3 class="qi__heading">{{ tab.title.value }}</h3>
               {%- endif -%}
-              <div class="qi__content">{{ tab.content.value | metafield_tag }}</div>
+              <div class="qi__content">{{ tab.content | metafield_tag }}</div>
             </div>
             {%- if has_two_col -%}
               <div class="qi__col">
