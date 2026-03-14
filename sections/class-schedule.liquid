@@ -14,7 +14,7 @@
   comment
     Build array of time slot labels from settings
   endcomment
-  assign slot_labels = '' | split: ','
+  assign slot_labels = ''
   for i in (1..10)
     assign key = 'time_slot_' | append: i | append: '_label'
     assign val = section.settings[key]
