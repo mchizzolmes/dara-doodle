@@ -152,6 +152,8 @@
 /* ── Outer wrapper ── */
 .qi {
   padding: {{ section.settings.padding_top }}px {{ section.settings.padding_sides }}px {{ section.settings.padding_bottom }}px;
+  max-width: {{ section.settings.max_width }}px;
+  margin: 0 auto;
   font-family: var(--font-body--family, sans-serif);
   color: var(--color-foreground, #222);
 }
@@ -405,6 +407,19 @@
   "tag": "section",
   "class": "section-quick-info-tabs",
   "settings": [
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Max width (px)",
+      "min": 400,
+      "max": 1400,
+      "step": 20,
+      "default": 900
+    },
     {
       "type": "header",
       "content": "Spacing"
