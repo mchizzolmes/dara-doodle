@@ -308,6 +308,18 @@
 .qi__content li           { margin-bottom: 0.25rem; }
 .qi__content strong       { font-weight: 700; }
 
+/* Override theme heading sizes inside richtext — keep them compact */
+.qi__content h1,
+.qi__content h2,
+.qi__content h3,
+.qi__content h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 0.4rem;
+  color: inherit;
+}
+
 /* ── Mobile ── */
 @media screen and (max-width: 640px) {
   .qi__nav        { gap: 0.6rem 1rem; margin-bottom: 1.25rem; }
