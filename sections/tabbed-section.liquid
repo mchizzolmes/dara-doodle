@@ -93,9 +93,6 @@
           {%- endif -%}
 
           <div class="qi__panel-text">
-            {%- if tab.title.value != blank -%}
-              <h3 class="qi__heading">{{ tab.title.value }}</h3>
-            {%- endif -%}
             {%- if tab.heading.value != blank -%}
               <h4 class="qi__panel-heading">{{ tab.heading.value }}</h4>
             {%- endif -%}
@@ -373,17 +370,6 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.75rem;
-}
-
-/* ── Tab title label — colored to match active tab ── */
-.qi__heading {
-  margin: 0 0 0.4rem;
-  font-size: 0.95rem;
-  font-weight: 700;
-  line-height: 1.25;
-  color: var(--c);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 /* ── Rich text content ── */
